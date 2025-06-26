@@ -4,7 +4,7 @@ require "ui_lib"  -- This defines a global table called UI because of how ui_lib
 
 local monitorSide = "right"
 local monitor = peripheral.wrap(monitorSide)
-
+local currentLayer = 1
 local colorCycle = { colors.red, colors.green, colors.blue, colors.yellow, colors.orange }
 local colorIndex = 1
 
@@ -23,8 +23,8 @@ function drawDemo()
   UI.drawButton("btn2", 14, 35, 10, 3, "Cycle Grid", colors.white, colors.green, function()
     colorIndex = colorIndex + 1
     if colorIndex > #colorCycle then colorIndex = 1 end
-    UI.changeGridColor(28,16, colors.black)
-    UI.CheckDB()
+    UI.changeGridColor(28,16,currentLayer, colors.black)
+    UI.CheckDB(currentLayer)
   end)
   
   UI.drawButton("stop", 26, 35, 10, 3, "Exit", colors.white, colors.red, function()
@@ -35,7 +35,7 @@ function drawDemo()
     end)
 
 
-  UI.CheckDB()
+  UI.CheckDB(currentLayer)
 end
 
 drawDemo()
