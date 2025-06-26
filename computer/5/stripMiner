@@ -1,0 +1,61 @@
+-- Mining Configuration
+axisY=40
+axisX=40
+width=1000000
+-----------------------
+
+state = "right"
+
+while(true) -- Start of Mainloop
+do
+
+-- Functions
+function fuel()
+    if turtle.getFuelLevel() < 100 then
+        turtle.refuel()
+    end
+    term.clear()
+    print("Fuel",turtle.getFuelLevel(),"/",turtle.getFuelLimit())
+end
+
+
+-- Main Actions
+for y = 1, axisY do
+    turtle.digDown()
+    turtle.down()
+    fuel()
+end
+for z = 1, width do
+    for x = 1, axisX do
+        fuel()
+        
+        turtle.dig()
+        turtle.forward()
+        turtle.digUp()
+    end
+    
+    if state == "right" then
+        fuel()    
+
+        print("Turning right...")
+        turtle.turnRight()
+        turtle.dig()
+        turtle.forward()
+        turtle.digUp()
+        turtle.turnRight()
+        state = "left"
+    elseif state == "left" then
+        fuel()  
+
+        print("Turning left...")
+        turtle.turnLeft()
+        turtle.dig()
+        turtle.forward()
+        turtle.digUp()
+        turtle.turnLeft()
+        state = "right"
+    end
+end
+
+os.shutdown()
+end -- Mainloop end
