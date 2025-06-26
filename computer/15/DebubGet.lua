@@ -13,7 +13,7 @@ if (message == "hello") then
     repeat
     event1, side1, channel1, replyChannel1, message1, distance1 = os.pullEvent("modem_message")
     until channel == 15
-    print(distance1)
+    print(event1 .. " :\n " .. side1 .. " :\n " .. channel1 .. " :\n " .. replyChannel1 .. " :\n " .. message1 .. " :\n " .. distance1)
 
     
 

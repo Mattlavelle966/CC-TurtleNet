@@ -2,8 +2,6 @@
 MineNet = {}
 
 function MineNet.listenOnChannel(ChannelInput)
-    print("transmitting to 15")
-    
     -- And wait for a reply
     local event, side, channel, replyChannel, message, distance
     repeat
