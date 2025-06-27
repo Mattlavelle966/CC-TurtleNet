@@ -17,7 +17,7 @@ if (userInput == 'y') then
     while true
     do
         modem.open(MASTER_RECEIVE_CHANNEL) -- Open 43 so we can receive replies
-        local netPackage
+        local netPackage 
         print("waiting for UI Master")
         channel, replyChannel, message, distance = MineNet.listenOnChannel(MASTER_RECEIVE_CHANNEL)
         print("master heard")

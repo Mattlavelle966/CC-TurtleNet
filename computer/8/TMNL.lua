@@ -2,7 +2,11 @@
 --turtle movement net logger
 
 TMNL = {}
-
+--starting location
+TMNL.pathPacket = {
+    { layer = 0,col = 0,row = 0, timestamp = os.time("local") }
+}
+TMNL.Facing = 0 -- e.g. 0=north, 1=east, 2=south, 3=west
 -- or we return the movement and return it 
 
 function TMNL.Forward()

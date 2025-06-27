@@ -12,6 +12,8 @@ local currentLayer = 1
 local colorCycle = { colors.red, colors.green, colors.blue, colors.yellow, colors.orange }
 local colorIndex = 1
 
+local LatestTimestamp
+
 UI.initBlockDB()
 UI.init(monitor)
 
@@ -20,7 +22,7 @@ modem.open(MASTER_RECEIVE_CHANNEL)
 
 function drawDemo()
   UI.clear()
-  UI.drawText(2, 1, "ComputerCraft UI Demo", colors.cyan)
+  UI.drawText(2, 1, "ComputerCraft UI Demo " .. os.time("local"), colors.cyan)
 
   UI.drawButton("btn1", 2, 35, 10, 3, "Start", colors.white, colors.blue, function()
     modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL,'start slaves')
@@ -31,9 +33,6 @@ function drawDemo()
     if (message == 'starting slaves') then
       UI.drawText(40, 36, "Mine_Net Online", colors.green)
       print("online")
-    else 
-      UI.drawText(40, 37, "Mine_Net Connection Failed", colors.red)
-      print("failed")
     end
   end)
 
