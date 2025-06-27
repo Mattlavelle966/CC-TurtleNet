@@ -22,11 +22,11 @@ function TMNL.Forward()
     if (hasMoved == true) then
         if TMNL.Facing == 0 then
             --coordinate { -1, 0, 0 }
-            currentCoordinates.y = currentCoordinates.y - 1
+            currentCoordinates.x = currentCoordinates.x - 1
         elseif TMNL.Facing == 1 then
             currentCoordinates.z = currentCoordinates.z + 1
         elseif TMNL.Facing == 2 then
-            currentCoordinates.y = currentCoordinates.y + 1
+            currentCoordinates.x = currentCoordinates.x + 1
         elseif TMNL.Facing == 3 then
             currentCoordinates.z = currentCoordinates.z - 1
         end
@@ -41,32 +41,53 @@ function TMNL.Forward()
 end
 
 function TMNL.Back()
-    movement = ''
     hasMoved = assert(turtle.back())
     if (hasMoved == true) then
-       movement = '#'  
+       if TMNL.Facing == 0 then
+            currentCoordinates.x = currentCoordinates.x + 1
+        elseif TMNL.Facing == 1 then
+            currentCoordinates.z = currentCoordinates.z - 1
+        elseif TMNL.Facing == 2 then
+            currentCoordinates.x = currentCoordinates.x - 1
+        elseif TMNL.Facing == 3 then
+            currentCoordinates.z = currentCoordinates.z + 1
+        end
+        table.insert(TMNL.Packet, {
+            x = currentCoordinates.x,
+            y = currentCoordinates.y,
+            z = currentCoordinates.z,
+            timestamp = os.date("!%c")
+        })
+        print(textutils.serialize(TMNL.Packet))
     end
-    return movement
 end
 
 function TMNL.Up()
     --needs layer system in addition
-    movement = ''
     hasMoved = assert(turtle.up())
     if (hasMoved == true) then
-       movement = '#'  
+        currentCoordinates.y = currentCoordinates.y + 1 
+        table.insert(TMNL.Packet, {
+            x = currentCoordinates.x,
+            y = currentCoordinates.y,
+            z = currentCoordinates.z,
+            timestamp = os.date("!%c")
+        })  
     end
-    return movement
 end
 
 function TMNL.Down()
     --needs layer system in addition
-    movement = ''
     hasMoved = assert(turtle.down())
     if (hasMoved == true) then
-       movement = '#'  
+       currentCoordinates.y = currentCoordinates.y - 1 
+        table.insert(TMNL.Packet, {
+            x = currentCoordinates.x,
+            y = currentCoordinates.y,
+            z = currentCoordinates.z,
+            timestamp = os.date("!%c")
+        })  
     end
-    return movement
 end
 
 function TMNL.TurnLeft()
@@ -86,34 +107,4 @@ function TMNL.TurnRight()
     if (hasMoved == true) then
         TMNL.Facing = (TMNL.Facing + 1) % 4
     end
-end
-
-function TMNL.Dig(side)
-    --needs layer system in addition
-    movement = ''
-    hasMoved = assert(turtle.dig(side))
-    if (hasMoved == true) then
-       movement = '#'  
-    end
-    return movement
-end
-
-function TMNL.DigUp()
-    --needs layer system in addition
-    movement = ''
-    hasMoved = assert(turtle.digUp())
-    if (hasMoved == true) then
-       movement = '#'  
-    end
-    return movement
-end
-
-function TMNL.DigDown()
-    --needs layer system in addition
-    movement = ''
-    hasMoved = assert(turtle.digDown())
-    if (hasMoved == true) then
-       movement = '#'  
-    end
-    return movement
 end
