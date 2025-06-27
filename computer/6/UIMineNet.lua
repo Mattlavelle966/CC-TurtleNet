@@ -24,7 +24,7 @@ function drawDemo()
   UI.clear()
   UI.drawText(2, 1, "ComputerCraft UI Demo " .. os.time("local"), colors.cyan)
 
-  UI.drawButton("btn1", 2, 35, 10, 3, "Start", colors.white, colors.blue, function()
+  UI.drawButton("btn1", 2, 35, 10, 3, "Connect", colors.white, colors.blue, function()
     modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL,'start slaves')
     print("sent")
     UI.drawText(40, 35, "Loading...", colors.white)
