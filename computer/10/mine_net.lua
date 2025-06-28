@@ -10,6 +10,19 @@ function MineNet.listenOnChannel(ChannelInput)
     return channel, replyChannel, message, distance 
 end
 
+function MineNet.TemplistenOnChannel(ChannelInput, attempts, gapDuration)
+    -- And wait for a reply
+    for i=0,attempts,1 do
+        event, side, channel, replyChannel, message, distance = os.pullEvent("modem_message")
+        if (message) then
+            break
+        end
+        sleep(gapDuration)
+    end
+    return channel, replyChannel, message, distance 
+
+end
+
 function MineNet.connectionValidation(modem, targetPort, listeningPort, authToken)
     local masterIsReady = false
     local slaveIsReady = false
