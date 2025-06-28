@@ -2,12 +2,10 @@
 --turtle movement net logger
 TMNL = {}
 
-
-local currentCoordinates = { x = 0, y = 0, z = 0 }
+--starting coords, make dynamic in future
+local currentCoordinates = { x = 27, y = 1, z = 16 }
 
 TMNL.Packet = {}
---starting location
-TMNL.startingCoords = {x = 0, y = 0, z = 0} 
 TMNL.Facing = 0 -- e.g. relative to starting pos
 -- 0=forward, 1=right, 2=back, 3=left
 -- or we return the movement and return it 
@@ -30,13 +28,20 @@ function TMNL.Forward()
         elseif TMNL.Facing == 3 then
             currentCoordinates.z = currentCoordinates.z - 1
         end
+        packet = {
+            x = currentCoordinates.x,
+            y = currentCoordinates.y,
+            z = currentCoordinates.z,
+            timestamp = os.date("!%c")
+            }
+        --return TMNL.Packet for all changes ever
         table.insert(TMNL.Packet, {
             x = currentCoordinates.x,
             y = currentCoordinates.y,
             z = currentCoordinates.z,
             timestamp = os.date("!%c")
             })
-        print(textutils.serialize(TMNL.Packet))
+        return packet
     end
 end
 
@@ -52,13 +57,19 @@ function TMNL.Back()
         elseif TMNL.Facing == 3 then
             currentCoordinates.z = currentCoordinates.z + 1
         end
+        packet = {
+            x = currentCoordinates.x,
+            y = currentCoordinates.y,
+            z = currentCoordinates.z,
+            timestamp = os.date("!%c")
+        }
         table.insert(TMNL.Packet, {
             x = currentCoordinates.x,
             y = currentCoordinates.y,
             z = currentCoordinates.z,
             timestamp = os.date("!%c")
         })
-        print(textutils.serialize(TMNL.Packet))
+        return packet
     end
 end
 
@@ -72,7 +83,14 @@ function TMNL.Up()
             y = currentCoordinates.y,
             z = currentCoordinates.z,
             timestamp = os.date("!%c")
-        })  
+        })
+        packet = {
+            x = currentCoordinates.x,
+            y = currentCoordinates.y,
+            z = currentCoordinates.z,
+            timestamp = os.date("!%c")
+        }
+        return packet  
     end
 end
 
@@ -86,7 +104,14 @@ function TMNL.Down()
             y = currentCoordinates.y,
             z = currentCoordinates.z,
             timestamp = os.date("!%c")
-        })  
+        })
+        packet = {
+            x = currentCoordinates.x,
+            y = currentCoordinates.y,
+            z = currentCoordinates.z,
+            timestamp = os.date("!%c")
+        }
+        return packet  
     end
 end
 

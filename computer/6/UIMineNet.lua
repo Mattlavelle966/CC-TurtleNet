@@ -33,6 +33,18 @@ function drawDemo()
     if (message == 'starting slaves') then
       UI.drawText(40, 36, "Mine_Net Online", colors.green)
       print("online")
+      while true do
+        print("waiting on packet")
+        channel, replyChannel, packet, distance = MineNet.listenOnChannel(MASTER_RECEIVE_CHANNEL)
+        modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL, 'worked')
+        print(packet)
+        local Pack = textutils.unserialize(packet)
+        print("updating DB")
+        UI.changeGridColor(Pack.x,Pack.z,Pack.y, colors.black)
+        print("getting latest")
+        UI.CheckDB(Pack.y)
+        print("DB loaded")
+      end
     end
   end)
 
@@ -61,4 +73,5 @@ while true do
   if side == monitorSide then
     UI.handleTouch(x, y)
   end
+  
 end
