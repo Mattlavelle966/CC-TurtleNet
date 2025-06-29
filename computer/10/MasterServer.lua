@@ -38,7 +38,7 @@ if (userInput == 'y') then
                 channel, replyChannel, message, distance = MineNet.listenOnChannel(RECEIVE_CHANNEL)
                 netPackage = message
 
-
+                print(netPackage)
                 print("Pushing to Masterdb")
                 modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL,netPackage)
                 modem.open(MASTER_RECEIVE_CHANNEL)

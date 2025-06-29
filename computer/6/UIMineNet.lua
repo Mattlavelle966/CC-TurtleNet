@@ -19,32 +19,58 @@ UI.init(monitor)
 
 modem.open(MASTER_RECEIVE_CHANNEL)
 
+function getClicks()
+  while true do
+    UI.drawText(37, 36, tostring(currentLayer) .. "  ", colors.green)
+    local e, side, x, y = os.pullEvent("monitor_touch")
+    if side == monitorSide then
+      UI.handleTouch(x, y)
+    end
+  end
+end
+
+function packetCollector()
+  while true do
+    local e = { os.pullEvent() }
+    print("EVENT: " .. textutils.serialize(e))
+    if (e[1] == "modem_message") then
+      pack = e[5]
+      pack = textutils.unserialize(pack)
+      if type(pack) == "table" then
+        local x = pack.x
+        local y = pack.y
+        local z = pack.z
+        print(("Coords received: x=%d, y=%d, z=%d"):format(x, y, z))
+        modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL, 'worked')
+        print("updating DB")
+        UI.changeGridColor(x,z,y, colors.black)
+        currentLayer = y
+        print("getting latest")
+        UI.CheckDB(currentLayer)
+        print("DB loaded")
+      else
+        print("No valid packet data in event[5]")
+      end
+    end
+  end
+end
 
 function drawDemo()
+
   UI.clear()
   UI.drawText(2, 1, "ComputerCraft UI Demo " .. os.time("local"), colors.cyan)
+  UI.drawText(37, 36, tostring(currentLayer), colors.green)
 
   UI.drawButton("btn1", 2, 35, 10, 3, "Connect", colors.white, colors.blue, function()
     modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL,'start slaves')
     print("sent")
-    UI.drawText(40, 35, "Loading...", colors.white)
+    UI.drawText(42, 35, "Loading...", colors.white)
     print("waiting for master")
     channel, replyChannel, message, distance = MineNet.listenOnChannel(MASTER_RECEIVE_CHANNEL)
     if (message == 'starting slaves') then
-      UI.drawText(40, 36, "Mine_Net Online", colors.green)
+      UI.drawText(42, 36, "Mine_Net Online", colors.green)
       print("online")
-      while true do
-        print("waiting on packet")
-        channel, replyChannel, packet, distance = MineNet.listenOnChannel(MASTER_RECEIVE_CHANNEL)
-        modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL, 'worked')
-        print(packet)
-        local Pack = textutils.unserialize(packet)
-        print("updating DB")
-        UI.changeGridColor(Pack.x,Pack.z,Pack.y, colors.black)
-        print("getting latest")
-        UI.CheckDB(Pack.y)
-        print("DB loaded")
-      end
+      
     end
   end)
 
@@ -61,6 +87,24 @@ function drawDemo()
     sleep(1)
     error("Stopped by user")
     end)
+    
+  UI.drawButton("up", 37, 35, 3, 1, "^", colors.white, colors.red, function()
+    if currentLayer <= 1 then
+      currentLayer = 100
+    else
+      currentLayer = currentLayer - 1 
+    end
+    UI.CheckDB(currentLayer)
+    end)
+
+  UI.drawButton("down", 37, 37, 3, 1, "=", colors.white, colors.red, function()
+    if currentLayer >= 100 then
+      currentLayer = 1
+    else
+      currentLayer = currentLayer + 1 
+    end
+    UI.CheckDB(currentLayer)
+    end)
 
 
   UI.CheckDB(currentLayer)
@@ -68,10 +112,4 @@ end
 
 drawDemo()
 -- note potential limitation on UI if DB updates are also managed by the same computer
-while true do
-  local e, side, x, y = os.pullEvent("monitor_touch")
-  if side == monitorSide then
-    UI.handleTouch(x, y)
-  end
-  
-end
+parallel.waitForAny(getClicks,packetCollector)

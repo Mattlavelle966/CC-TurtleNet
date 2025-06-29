@@ -13,8 +13,8 @@ if (userInput == 'y') then
     print("Happy Mining")
     print("waiting")
     C,RC,Message,D = MineNet.listenOnChannel(RECEIVE_CHANNEL)
-    print("Received")
     if ( Message == "hello") then
+        print("Received")
         print("sending Ready")
         modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "ready")
         print("reccieved, awaiting response")
