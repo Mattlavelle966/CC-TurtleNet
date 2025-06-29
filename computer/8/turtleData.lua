@@ -4,7 +4,6 @@ require 'mine_net'
 local modem = peripheral.find("modem") or error("No modem attached", 0)
 local RECEIVE_CHANNEL = 15
 local SENDING_CHANNEL = 43
-local turtleNavPath = "FBLR"
 modem.open(RECEIVE_CHANNEL)
 
 print("please enter y to begin mining: ")
@@ -21,9 +20,14 @@ if (userInput == 'y') then
         cA,rcA,MessageA,dA = MineNet.listenOnChannel(RECEIVE_CHANNEL)
         if (MessageA == 'begin mining') then
             while true do
+                -- max 55=x, 32=z/y because we are only looking at a one y coord at a time
+                
                 print("sending Packet")
-                currentMove = TMNL.Forward()
-                modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(currentMove))
+                for i=0,3,1 do
+                    currentMove = TMNL.Forward()
+                    modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(currentMove))
+                end
+                TMNL.TurnLeft()
             end
         else
             print("begin mining not recieved")

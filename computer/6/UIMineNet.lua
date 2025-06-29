@@ -32,9 +32,9 @@ end
 function packetCollector()
   while true do
     local e = { os.pullEvent() }
-    print("EVENT: " .. textutils.serialize(e))
     if (e[1] == "modem_message") then
       pack = e[5]
+      print("EVENT: " .. textutils.serialize(e))
       pack = textutils.unserialize(pack)
       if type(pack) == "table" then
         local x = pack.x

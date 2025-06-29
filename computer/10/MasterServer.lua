@@ -1,5 +1,4 @@
 
-require "ui_lib"
 require "mine_net"
 
 local RECEIVE_CHANNEL = 43
@@ -9,7 +8,6 @@ local MASTER_SENDING_CHANNEL = 32
 
 local modem = peripheral.find("modem") or error("No modem attached", 0)
 
-UI.initBlockDB()
 -- Send our message
 --temporary terminal till a startup file 
 print("please enter y to begin: ")
