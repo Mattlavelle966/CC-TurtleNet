@@ -11,13 +11,13 @@ function MovementLoop()
         -- max 55=x, 32=z/y because we are only looking at a one y coord at a time
         
         sleep(1)
-        currentMove = TMNL.Forward()
+        TMNL.Forward()
         sleep(1)
-        currentMove = TMNL.Forward()
+        TMNL.Forward()
         sleep(1)
-        currentMove = TMNL.Forward()
+        TMNL.Forward()
         sleep(1)
-        currentMove = TMNL.Forward()
+        TMNL.Forward()
         
         TMNL.TurnLeft()
     end

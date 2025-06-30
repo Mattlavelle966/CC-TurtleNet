@@ -17,8 +17,9 @@ TMNL.Facing = 0 -- e.g. relative to starting pos
 function TMNL.Forward()
     -- rather then a string movement could be a color object as the - 
     -- end result on the main server is a color database where different
-    -- colors, black is empty space and grey is unknown if   
-    hasMoved = turtle.forward()
+    -- colors, black is empty space and grey is unknown if
+    turtle.refuel(1)   
+    hasMoved,str = turtle.forward()
     if (hasMoved == true) then
         if TMNL.Facing == 0 then
             --coordinate { -1, 0, 0 }
@@ -46,10 +47,14 @@ function TMNL.Forward()
             turtleId = os.computerID(),
             timestamp = os.time("local")
             })
+        print("logged") 
+    else
+        print(tostring(hasMoved) .. str)        
     end
 end
 
 function TMNL.Back()
+    turtle.refuel(1)
     hasMoved = turtle.back()
     if (hasMoved == true) then
        if TMNL.Facing == 0 then
@@ -80,6 +85,7 @@ end
 
 function TMNL.Up()
     --needs layer system in addition
+    turtle.refuel(1)
     hasMoved = turtle.up()
     if (hasMoved == true) then
         TMNL.currentCoordinates.y = TMNL.currentCoordinates.y + 1 
@@ -102,6 +108,7 @@ end
 
 function TMNL.Down()
     --needs layer system in addition
+    turtle.refuel(1)
     hasMoved = turtle.down()
     if (hasMoved == true) then
        TMNL.currentCoordinates.y = TMNL.currentCoordinates.y - 1 
