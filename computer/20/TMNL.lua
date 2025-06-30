@@ -47,7 +47,6 @@ function TMNL.Forward()
             turtleId = os.computerID(),
             timestamp = os.time("local")
             })
-        print("logged") 
     else
         print(tostring(hasMoved) .. str)        
     end

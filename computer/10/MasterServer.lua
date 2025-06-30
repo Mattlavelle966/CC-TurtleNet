@@ -44,23 +44,32 @@ if (userInput == 'y') then
                 --
                 for i=1,totalTurtles,1 do
                     print("requesting turtle" .. i)
-                    sleep(.5)
                     modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "send latest"..i)
-                    local e = { os.pullEvent() }
-                    if (e[1] == "modem_message") then
-                        --print("EVENT: " .. textutils.serialize(e))
-                        logToFile(e,"e")
-                        sleep(1)
-                        message = e[5]
-                        packets = textutils.unserialize(message)
-                        for j=1,#packets,1 do
-                            sleep(1)
-                            logToFile(packets[j],"packetsJ")
-                            --print(textutils.serialize(packets[j]))                            
-                            table.insert(buffer,packets[j])
-                           
+                    local timer = os.startTimer(5)
+                    local gotResponse = false
+                    repeat
+                        local e = { os.pullEvent() }
+                        if (e[1] == "modem_message") then
+                            message = e[5]
+                            packets = textutils.unserialize(message)
+                            logToFile(packets,"packets")
+                            if packets then
+                                
+                                for j=1,#packets,1 do
+                                    table.insert(buffer,packets[j])
+                                end
+
+                                gotResponse = true
+                            else 
+                                print("packet null")
+                                --os.queueEvent("try")
+                            end
+                        elseif (e[1] == "timer") then
+                            print("timer triggered")
+                            --os.queueEvent("try")
+                            gotResponse = true
                         end
-                    end
+                    until gotResponse
                 end
                 --should be 1D array of PACKS objects
                 print(textutils.serialize(buffer))
@@ -69,7 +78,6 @@ if (userInput == 'y') then
                 end)
                 logToFile(buffer,"buffer")
                 for i=1, #buffer,1 do
-                    logToFile(textutils.serialize(buffer[i]),"bufferI") 
                     print("Pushing to Masterdb")
                     modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL,textutils.serialize(buffer[i]))
                     modem.open(MASTER_RECEIVE_CHANNEL)
