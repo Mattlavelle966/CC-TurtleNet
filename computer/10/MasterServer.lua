@@ -40,14 +40,17 @@ if (userInput == 'y') then
                     print("requesting turtle" .. i)
                     sleep(.5)
                     modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "send latest"..i)
-                    local channel, replyChannel, message, distance = MineNet.listenOnChannel(RECEIVE_CHANNEL)
-                    print(message)
-                    packets = textutils.unserialize(message)
-                    for j=1,#packets,1 do
-                        for i=1, #packets[j],1 do
-                            table.insert(buffer,pack)
-                            --should show each pack
-                            print(textutils.serialize(pack))   
+                    local e = { os.pullEvent() }
+                    if (e[1] == "modem_message") then
+                        print("EVENT: " .. textutils.serialize(e))
+                        message = e[5]
+                        packets = textutils.unserialize(message)
+                        for j=1,#packets,1 do
+                            for i=1, #packets[j],1 do
+                                table.insert(buffer,pack)
+                                --should show each pack
+                                print(textutils.serialize(pack))   
+                            end
                         end
                     end
                 end

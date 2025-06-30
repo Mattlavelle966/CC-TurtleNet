@@ -52,7 +52,7 @@ if (userInput == 'y') then
         cA,rcA,MessageA,dA = MineNet.listenOnChannel(RECEIVE_CHANNEL)
         if (MessageA == 'begin mining') then
             --actions thread below
-            parallel.waitForAll(MovementLoop,ListenLoop)
+            parallel.waitForAny(MovementLoop,ListenLoop)
         else
             print("begin mining not recieved")
         end

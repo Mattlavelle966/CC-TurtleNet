@@ -27,7 +27,8 @@ function ListenLoop()
     while true do
         local e = { os.pullEvent() }
         if (e[1] == "modem_message") then
-            pack = e[5] 
+            pack = e[5]
+            print("EVENT: " .. textutils.serialize(e[5]))
             if (pack == "send latest2") then
                 print("sending Packet")
                 sleep(.7)
@@ -51,7 +52,7 @@ if (userInput == 'y') then
         cA,rcA,MessageA,dA = MineNet.listenOnChannel(RECEIVE_CHANNEL)
         if (MessageA == 'begin mining') then
             --actions thread below
-            parallel.waitForAll(MovementLoop,ListenLoop)
+            parallel.waitForAny(MovementLoop,ListenLoop)
         else
             print("begin mining not recieved")
         end
