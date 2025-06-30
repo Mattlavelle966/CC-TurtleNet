@@ -68,7 +68,7 @@ if (userInput == 'y') then
                     return a.timestamp > b.timestamp
                 end)
                 logToFile(buffer,"buffer")
-                for i=0, #buffer,1 do
+                for i=1, #buffer,1 do
                     logToFile(textutils.serialize(buffer[i]),"bufferI") 
                     print("Pushing to Masterdb")
                     modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL,textutils.serialize(buffer[i]))

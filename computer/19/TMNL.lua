@@ -3,7 +3,7 @@
 TMNL = {}
 -- max of 55=x and 32=z
 --starting coords, make dynamic in future
-TMNL.currentCoordinates = { x = 29, y = 1, z = 20 }
+TMNL.currentCoordinates = { x = 29, y = 1, z = 18 }
 
 
 TMNL.Packet = {}
