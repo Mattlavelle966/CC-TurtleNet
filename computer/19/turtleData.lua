@@ -6,42 +6,35 @@ local RECEIVE_CHANNEL = 15
 local SENDING_CHANNEL = 43
 modem.open(RECEIVE_CHANNEL)
 function MovementLoop()
+    print("thread 1")
     while true do
         -- max 55=x, 32=z/y because we are only looking at a one y coord at a time
         
-        print("sending Packet")
-        for i=0,3,1 do
-            sleep(1)
-            currentMove = TMNL.Forward()
-        end
+        sleep(1)
+        currentMove = TMNL.Forward()
+        sleep(1)
+        currentMove = TMNL.Forward()
+        sleep(1)
+        currentMove = TMNL.Forward()
+        sleep(1)
+        currentMove = TMNL.Forward()
         
         TMNL.TurnLeft()
     end
 end
 function ListenLoop()
+    print("thread 2")
     while true do
-        
-        c,rc,msg,ds = MineNet.listenOnChannel(RECEIVE_CHANNEL)
-        if (msg == "send latest1") then
-            sleep(.7)
-            modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Queue))
-            TMNL.Queue = {}
-        end
-        --TEMP
-        if (msg == "send latest2") then
-            sleep(.7)
-            modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Queue))
-            TMNL.Queue = {}
-        end
-        if (msg == "send latest3") then
-            sleep(.7)
-            modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Queue))
-            TMNL.Queue = {}
-        end
-        if (msg == "send latest4") then
-            sleep(.7)
-            modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Queue))
-            TMNL.Queue = {}
+        local e = { os.pullEvent() }
+        if (e[1] == "modem_message") then
+            pack = e[5]
+            print("EVENT: " .. textutils.serialize(e[5]))
+            if (pack == "send latest1") then
+                print("sending Packet")
+                sleep(.7)
+                modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Queue))
+                TMNL.Queue = {}
+            end
         end
     end
 end
@@ -59,7 +52,7 @@ if (userInput == 'y') then
         cA,rcA,MessageA,dA = MineNet.listenOnChannel(RECEIVE_CHANNEL)
         if (MessageA == 'begin mining') then
             --actions thread below
-            parallel.waitForAny(MovementLoop,ListenLoop)
+            parallel.waitForAll(MovementLoop,ListenLoop)
         else
             print("begin mining not recieved")
         end

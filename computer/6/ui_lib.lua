@@ -94,6 +94,24 @@ function UI.CheckDB(layer)
     return selectedLayer
   end)
 end
+--NEW
+function UI.SaveDB()
+  file = fs.open("BLOCK_DB.txt", "w")
+  file.write(textutils.serialize(BLOCK_DB))
+  file.close()
+end
+--NEW
+function UI.GetSavedDB()
+  local exist = fs.exists("BLOCK_DB.txt")
+  if (exist)then
+      file = fs.open("BLOCK_DB.txt", "r")
+      local content = file.readAll()
+      pack = textutils.unserialize(content)
+      BLOCK_DB = pack
+  else
+      print("No Saved DB available")
+  end
+end
 
 function UI.handleTouch(x, y)
   for _, el in ipairs(UI.elements) do

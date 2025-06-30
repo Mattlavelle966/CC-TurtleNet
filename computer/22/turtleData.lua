@@ -6,11 +6,11 @@ local RECEIVE_CHANNEL = 15
 local SENDING_CHANNEL = 43
 modem.open(RECEIVE_CHANNEL)
 function MovementLoop()
+    print("thread 1")
     while true do
         -- max 55=x, 32=z/y because we are only looking at a one y coord at a time
         
-        print("sending Packet")
-        for i=0,3,1 do
+        for i=1,3,1 do
             sleep(1)
             currentMove = TMNL.Forward()
         end
@@ -19,26 +19,16 @@ function MovementLoop()
     end
 end
 function ListenLoop()
+    print("thread 1")
     while true do
         
-        c,rc,msg,ds = MineNet.listenOnChannel(RECEIVE_CHANNEL)
-        if (msg == "send latest1") then
-            sleep(.7)
-            modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Queue))
-            TMNL.Queue = {}
-        end
-        --TEMP
-        if (msg == "send latest2") then
-            sleep(.7)
-            modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Queue))
-            TMNL.Queue = {}
-        end
-        if (msg == "send latest3") then
-            sleep(.7)
-            modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Queue))
-            TMNL.Queue = {}
-        end
+        local event, side, channel, replyChannel, msg, distance
+        repeat
+        event, side, channel, replyChannel, msg, distance = os.pullEvent("modem_message")
+        until channel == SENDING_CHANNEL
+        print(msg)
         if (msg == "send latest4") then
+            print("sending Packet")
             sleep(.7)
             modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Queue))
             TMNL.Queue = {}

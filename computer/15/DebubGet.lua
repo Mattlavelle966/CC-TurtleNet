@@ -1,20 +1,14 @@
+local exist = fs.exists("BLOCK_DB.txt")
+if (exist)then
+    file = fs.open("BLOCK_DB.txt", "r")
+    local content = file.readAll()
+    pack = textutils.unserialize(content)
 
-local modem = peripheral.find("modem") or error("No modem attached", 0)
-modem.open(15) -- Open 43 so we can receive replies
-print("open on 15")
-local event, side, channel, replyChannel, message, distance
-repeat
-event, side, channel, replyChannel, message, distance = os.pullEvent("modem_message")
-until channel == 15
-
-if (message == "hello") then
-    modem.transmit(43, 15, "ready")
-    local event1, side1, channel1, replyChannel1, message1, distance1
-    repeat
-    event1, side1, channel1, replyChannel1, message1, distance1 = os.pullEvent("modem_message")
-    until channel == 15
-    print(event1 .. " :\n " .. side1 .. " :\n " .. channel1 .. " :\n " .. replyChannel1 .. " :\n " .. message1 .. " :\n " .. distance1)
-
-    
-
+else
+    print("it does not exists")
+    file = fs.open("BLOCK_DB.txt", "w")
+    pack = {coords={x=1,y=2,z=3}, time = os.date()}
+    file.write(textutils.serialize(pack))
+    file.close()
+     
 end

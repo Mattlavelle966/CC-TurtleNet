@@ -9,7 +9,6 @@ function MovementLoop()
     while true do
         -- max 55=x, 32=z/y because we are only looking at a one y coord at a time
         
-        print("sending Packet")
         for i=0,3,1 do
             sleep(1)
             currentMove = TMNL.Forward()
@@ -22,27 +21,14 @@ function ListenLoop()
     while true do
         
         c,rc,msg,ds = MineNet.listenOnChannel(RECEIVE_CHANNEL)
-        if (msg == "send latest1") then
-            sleep(.7)
-            modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Queue))
-            TMNL.Queue = {}
-        end
-        --TEMP
-        if (msg == "send latest2") then
-            sleep(.7)
-            modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Queue))
-            TMNL.Queue = {}
-        end
+        print(msg)
         if (msg == "send latest3") then
             sleep(.7)
+            print("sending Packet")
             modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Queue))
             TMNL.Queue = {}
         end
-        if (msg == "send latest4") then
-            sleep(.7)
-            modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Queue))
-            TMNL.Queue = {}
-        end
+        
     end
 end
 print("please enter y to begin mining: ")
