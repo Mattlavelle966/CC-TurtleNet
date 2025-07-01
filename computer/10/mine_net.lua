@@ -13,9 +13,11 @@ function MineNet.restart()
     os.reboot()
 end
 
-function MineNet.timerListenOnChannel(duration)
-    local timer = os.startTimer(duration)
+function MineNet.attemptsTimerEventListener(duration,totalAttempts)
+    local timerID = os.startTimer(duration)
     local gotResponse = false
+    local attempts = 0 
+    local channel, replyChannel, message, distance 
     repeat
         local e = { os.pullEvent() }
         if (e[1] == "modem_message") then
@@ -25,7 +27,32 @@ function MineNet.timerListenOnChannel(duration)
             distance = e[6]
             gotResponse = true
 
-        elseif (e[1] == "timer") then
+        elseif (e[1] == "timer" and e[2] == timerID) then
+            attempts = attempts + 1
+            print("attempts" .. tostring(attempts))
+            if (attempts < totalAttempts)then
+                print("timer triggered")
+                gotResponse = true
+            end
+        end
+    until gotResponse
+    return channel, replyChannel, message, distance 
+end
+
+function MineNet.timerListenOnChannel(duration)
+    local timerID = os.startTimer(duration)
+    local gotResponse = false
+    local channel, replyChannel, message, distance 
+    repeat
+        local e = { os.pullEvent() }
+        if (e[1] == "modem_message") then
+            channel = e[3]
+            replyChannel = e[4]
+            message = e[5]
+            distance = e[6]
+            gotResponse = true
+
+        elseif (e[1] == "timer" and e[2] == timerID) then
             print("timer triggered")
             gotResponse = true
         end

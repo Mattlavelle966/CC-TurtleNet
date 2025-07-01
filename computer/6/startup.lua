@@ -1,7 +1,12 @@
 -- demo.lua
-
+--MasterMineUI
 require "ui_lib"  -- This defines a global table called UI because of how ui_lib.lua is written
 require "mine_net"
+
+--CONFIG
+MAX_X = 55
+MAX_Y = 100
+MAX_Z = 32
 
 local MASTER_SENDING_CHANNEL = 73
 local MASTER_RECEIVE_CHANNEL = 32
@@ -39,24 +44,32 @@ function packetCollector()
 
       pack = textutils.unserialize(e[5])
       if type(pack) == "table" then
-        UI.drawText(42, 37, "Mine_Net Online", colors.green)
-        local x = pack.x
-        local y = pack.y
-        local z = pack.z
-        print(("Coords received: x=%d, y=%d, z=%d"):format(x, y, z))
-        modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL, 'worked')
-        print("updating DB")
-        UI.changeGridColor(x,z,y, colors.black)
-        currentLayer = y
-        print("getting latest")
-        UI.CheckDB(currentLayer)
-        print("DB loaded")
+        local x, y, z
+        if pack.x and pack.y and pack.z and
+          pack.x >= 1 and pack.x <= 55 and
+          pack.y >= 1 and pack.y <= 100 and
+          pack.z >= 1 and pack.z <= 32 then
+
+          x = pack.x
+          y = pack.y
+          z = pack.z
+          UI.drawText(42, 37, "Mine_Net Online", colors.green)
+          print(("Coords received: x=%d, y=%d, z=%d"):format(x, y, z))
+          modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL, 'worked')
+          print("updating DB")
+          UI.changeGridColor(x,z,y, colors.black)
+          currentLayer = y
+          print("getting latest")
+          UI.CheckDB(currentLayer)
+          print("DB loaded")
+        else
+          MineNet.restart()
+        end
       else
         print("No valid packet data in event[5]")
         UI.drawText(42, 37, "MN packet failed", colors.red)
         sleep(1)
         UI.drawText(42, 38,"retrying...  ", colors.red)
-        MineNet.restart()
       end
     end
   end
@@ -69,6 +82,7 @@ function drawDemo()
   UI.drawText(37, 36, tostring(currentLayer), colors.green)
 
   UI.drawButton("btn1", 2, 35, 10, 3, "Connect", colors.white, colors.blue, function()
+    print("press")
     modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL,'start slaves')
     print("sent")
     UI.drawText(42, 35, "Loading...", colors.white)

@@ -1,6 +1,6 @@
 
 require "mine_net"
-
+--MasterMineServer
 local RECEIVE_CHANNEL = 43
 local SENDING_CHANNEL = 15
 local MASTER_RECEIVE_CHANNEL = 73
@@ -53,7 +53,7 @@ if (message == 'start slaves') then
                         else 
                             print("packet null")
                         end
-                    elseif (e[1] == "timer") then
+                    elseif (e[1] == "timer" and e[2] == timer) then
                         print("timer triggered")
                         gotResponse = true
                     end
