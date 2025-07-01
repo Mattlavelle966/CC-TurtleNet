@@ -1,2 +1,4 @@
 Turtle Slaves = 15
 Turtle Master = 43
+GPS = 101
+relayPylon = 100 
