@@ -12,11 +12,6 @@ local latestTimestamp = 0
 
 local modem = peripheral.find("modem") or error("No modem attached", 0)
 
-function logToFile(data,name)
-  file = fs.open(name..".txt", "w")
-  file.write(textutils.serialize(data))
-  file.close()
-end
 
 -- Send our message
 --temporary terminal till a startup file 
@@ -28,22 +23,17 @@ if (userInput == 'y') then
     channel, replyChannel, message, distance = MineNet.listenOnChannel(MASTER_RECEIVE_CHANNEL)
     print("master heard")
     modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL,'starting slaves')
-    
     if (message == 'start slaves') then 
         modem.open(RECEIVE_CHANNEL)
         modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "hello")
         print("transmitting on Channel: " .. SENDING_CHANNEL)
         -- And wait for a reply
         channel, replyChannel, message, distance = MineNet.listenOnChannel(RECEIVE_CHANNEL)
-        
         if (message == "ready") then
             print("ready")
             modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "begin mining")
             while true do
-                
-                --below should be the array of listens depending on how many turtles there are
                 print("awaiting Turtles")
-                --
                 for i=1,totalTurtles,1 do
                     print("requesting turtle" .. i)
                     modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "send latest"..i)
@@ -54,7 +44,7 @@ if (userInput == 'y') then
                         if (e[1] == "modem_message") then
                             message = e[5]
                             packets = textutils.unserialize(message)
-                            logToFile(packets,"packets")
+                            MineNet.logToFile(packets,"packets")
                             if packets then
                                 
                                 for j=1,#packets,1 do
@@ -64,11 +54,9 @@ if (userInput == 'y') then
                                 gotResponse = true
                             else 
                                 print("packet null")
-                                --os.queueEvent("try")
                             end
                         elseif (e[1] == "timer") then
                             print("timer triggered")
-                            --os.queueEvent("try")
                             gotResponse = true
                         end
                     until gotResponse
@@ -80,7 +68,7 @@ if (userInput == 'y') then
                     return a.timestamp > b.timestamp
                 end)
 
-                logToFile(buffer,"buffer")
+                MineNet.logToFile(buffer,"buffer")
                 for i=1, #buffer,1 do
                     currentBuffer = buffer[i]
                     if (latestTimestamp <= currentBuffer.timestamp)then
@@ -95,9 +83,7 @@ if (userInput == 'y') then
                             print("push to DB failed")
                         end
                     end
-
                 end
-
                 modem.open(RECEIVE_CHANNEL)
                 buffer = {}                
             end

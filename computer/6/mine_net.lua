@@ -1,6 +1,12 @@
 -- mine_net.lua
 MineNet = {}
 
+function MineNet.logToFile(data,name)
+  file = fs.open(name..".txt", "w")
+  file.write(textutils.serialize(data))
+  file.close()
+end
+
 function MineNet.listenOnChannel(ChannelInput)
     -- And wait for a reply
     local event, side, channel, replyChannel, message, distance

@@ -4,8 +4,15 @@ require 'mine_net'
 local modem = peripheral.find("modem") or error("No modem attached", 0)
 local RECEIVE_CHANNEL = 15
 local SENDING_CHANNEL = 43
-local MASTER_TURTLE_NUMBER = 2
+--CONFIG 
+local MASTER_TURTLE_NUMBER = 1
 modem.open(RECEIVE_CHANNEL)
+function logToFile(data,name)
+  file = fs.open(name..".txt", "w")
+  file.write(textutils.serialize(data))
+  file.close()
+end
+
 function restart()
     print("rebooting..")
     sleep(2)
@@ -16,10 +23,10 @@ function MovementLoop()
     print("thread 1")
     while true do
         -- max 55=x, 32=z/y because we are only looking at a one y coord at a time
-        
+       
         for i = 1, 16, 1 do
             data = TMNL.Forward()
-            print(textutils.serialize(data))
+            logToFile(data,"data")
             if (data.Result == false) then
                 TMNL.TurnRight()
             end
@@ -36,36 +43,36 @@ function ListenLoop()
             print("EVENT: " .. textutils.serialize(e))
 
             pack = e[5]
-            if (pack == "send latest" .. tostring(MASTER_TURTLE_NUMBER)) then    
+            if (pack == "send latest" .. tostring(MASTER_TURTLE_NUMBER)) then
                 print("EVENT: " .. textutils.serialize(e[5]))
                 print("sending Packet")
                 modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Packet))
             else
-                print("wrong pack")
-             end
+                 print("wrong pack")       
+            end
         end
     end
 end
 
-    print("Happy Mining")
-    print("waiting")
-    C,RC,Message,D = MineNet.listenOnChannel(RECEIVE_CHANNEL)
-    if ( Message == "hello") then
-        print("Received")
-        print("sending Ready")
-        modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "ready")
-        print("reccieved, awaiting response")
-        cA,rcA,MessageA,dA = MineNet.listenOnChannel(RECEIVE_CHANNEL)
-        if (MessageA == 'begin mining') then
-            --actions thread below
-            parallel.waitForAny(MovementLoop,ListenLoop)
-        else
-            print("begin mining not recieved")
-            restart()
-        end
+print("Happy Mining")
+print("waiting")
+C,RC,Message,D = MineNet.listenOnChannel(RECEIVE_CHANNEL)
+if ( Message == "hello") then
+    print("Received")
+    print("sending Ready")
+    modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "ready")
+    print("reccieved, awaiting response")
+    cA,rcA,MessageA,dA = MineNet.listenOnChannel(RECEIVE_CHANNEL)
+    if (MessageA == 'begin mining') then
+        --actions thread below
+        parallel.waitForAny(MovementLoop,ListenLoop)
     else
-        print("hello was not recieved")
+        print("begin mining not recieved")
         restart()
     end
+else
+    print("hello was not recieved")
+    restart()
+end
 
     

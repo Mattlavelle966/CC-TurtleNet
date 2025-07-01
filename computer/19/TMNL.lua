@@ -3,11 +3,11 @@
 TMNL = {}
 -- max of 55=x and 32=z
 --starting coords, make dynamic in future
+--CONFIG
 TMNL.currentCoordinates = { x = 29, y = 1, z = 18 }
 
 
 TMNL.Packet = {}
-TMNL.Queue = {} 
 TMNL.Facing = 0 -- e.g. relative to starting pos
 -- 0=north, 1=west, 2=south, 3=east
 -- or we return the movement and return it 
@@ -18,6 +18,7 @@ function TMNL.Forward()
     -- rather then a string movement could be a color object as the - 
     -- end result on the main server is a color database where different
     -- colors, black is empty space and grey is unknown if
+    local returnData = {}
     turtle.refuel(1)   
     hasMoved,str = turtle.forward()
     if (hasMoved == true) then
@@ -40,21 +41,17 @@ function TMNL.Forward()
             turtleId = os.computerID(),
             timestamp = os.time("local")
             })
-        table.insert(TMNL.Queue, {
-            x = TMNL.currentCoordinates.x,
-            y = TMNL.currentCoordinates.y,
-            z = TMNL.currentCoordinates.z,
-            turtleId = os.computerID(),
-            timestamp = os.time("local")
-            })
     else
         print(tostring(hasMoved) .. str)        
     end
+    table.insert(returnData,{Result = hasMoved, event=str })
+    return returnData
 end
 
 function TMNL.Back()
+    local returnData = {}
     turtle.refuel(1)
-    hasMoved = turtle.back()
+    hasMoved,str = turtle.back()
     if (hasMoved == true) then
        if TMNL.Facing == 0 then
             TMNL.currentCoordinates.x = TMNL.currentCoordinates.x + 1
@@ -65,13 +62,6 @@ function TMNL.Back()
         elseif TMNL.Facing == 3 then
             TMNL.currentCoordinates.z = TMNL.currentCoordinates.z - 1
         end
-        table.insert(TMNL.Queue, {
-            x = TMNL.currentCoordinates.x,
-            y = TMNL.currentCoordinates.y,
-            z = TMNL.currentCoordinates.z,
-            turtleId = os.computerID(),
-            timestamp = os.time("local")
-            })
         table.insert(TMNL.Packet, {
             x = TMNL.currentCoordinates.x,
             y = TMNL.currentCoordinates.y,
@@ -79,7 +69,11 @@ function TMNL.Back()
             turtleId = os.computerID(),
             timestamp = os.time("local")
         })
+    else
+        print(tostring(hasMoved) .. str)        
     end
+    table.insert(returnData,{Result = hasMoved, event=str })
+    return returnData
 end
 
 function TMNL.Up()
@@ -95,13 +89,6 @@ function TMNL.Up()
             turtleId = os.computerID(),
             timestamp = os.time("local")
         })
-        table.insert(TMNL.Queue, {
-            x = TMNL.currentCoordinates.x,
-            y = TMNL.currentCoordinates.y,
-            z = TMNL.currentCoordinates.z,
-            turtleId = os.computerID(),
-            timestamp = os.time("local")
-            })  
     end
 end
 
@@ -118,13 +105,6 @@ function TMNL.Down()
             turtleId = os.computerID(),
             timestamp = os.time("local")
         })
-        table.insert(TMNL.Queue, {
-            x = TMNL.currentCoordinates.x,
-            y = TMNL.currentCoordinates.y,
-            z = TMNL.currentCoordinates.z,
-            turtleId = os.computerID(),
-            timestamp = os.time("local")
-            })  
     end
 end
 

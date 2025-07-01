@@ -4,7 +4,11 @@ require 'mine_net'
 local modem = peripheral.find("modem") or error("No modem attached", 0)
 local RECEIVE_CHANNEL = 15
 local SENDING_CHANNEL = 43
+--CONFIG 
+local MASTER_TURTLE_NUMBER = 1
 modem.open(RECEIVE_CHANNEL)
+
+
 function restart()
     print("rebooting..")
     sleep(2)
@@ -16,22 +20,13 @@ function MovementLoop()
     while true do
         -- max 55=x, 32=z/y because we are only looking at a one y coord at a time
        
-         sleep(1)
-        TMNL.Forward()
-        sleep(1)
-        TMNL.Forward()
-        sleep(1)
-        TMNL.Forward()
-        sleep(1)
-        TMNL.Forward()
-        sleep(1)
-        TMNL.Forward()
-        sleep(1)
-        TMNL.Forward()
-        sleep(1)
-        TMNL.Forward()
-        sleep(1)
-        TMNL.Forward()
+        for i = 1, 16, 1 do
+            data = TMNL.Forward()
+            MineNet.logToFile(data,"data")
+            if (data.Result == false) then
+                TMNL.TurnRight()
+            end
+        end 
         
         TMNL.TurnLeft()
     end
@@ -44,15 +39,10 @@ function ListenLoop()
             print("EVENT: " .. textutils.serialize(e))
 
             pack = e[5]
-            if (pack == "send latest1") then
+            if (pack == "send latest" .. tostring(MASTER_TURTLE_NUMBER)) then
                 print("EVENT: " .. textutils.serialize(e[5]))
-                --if (#TMNL.Queue > 0) then
                 print("sending Packet")
                 modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Packet))
-                --    TMNL.Queue = {}
-                --else
-                --    print("empty queue")
-                --end
             else
                  print("wrong pack")       
             end

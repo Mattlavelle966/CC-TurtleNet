@@ -19,12 +19,6 @@ UI.init(monitor)
 
 modem.open(MASTER_RECEIVE_CHANNEL)
 
-function logToFile(data,name)
-  file = fs.open(name..".txt", "w")
-  file.write(textutils.serialize(data))
-  file.close()
-end
-
 function getClicks()
   while true do
     UI.drawText(37, 36, tostring(currentLayer) .. "  ", colors.green)
@@ -39,8 +33,8 @@ function packetCollector()
   while true do
     local e = { os.pullEvent() }
     if (e[1] == "modem_message") then
-      logToFile(textutils.serialize(e), 'e')
-      logToFile(textutils.serialize(e[5]), 'e5')
+      MineNet.logToFile(textutils.serialize(e), 'e')
+      MineNet.logToFile(textutils.serialize(e[5]), 'e5')
 
       pack = textutils.unserialize(e[5])
       if type(pack) == "table" then
