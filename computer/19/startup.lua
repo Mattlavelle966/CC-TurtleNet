@@ -46,13 +46,13 @@ function ListenLoop()
             pack = e[5]
             if (pack == "send latest1") then
                 print("EVENT: " .. textutils.serialize(e[5]))
-                if (#TMNL.Queue > 0) then
-                    print("sending Packet")
-                    modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Queue))
-                    TMNL.Queue = {}
-                else
-                    print("empty queue")
-                end
+                --if (#TMNL.Queue > 0) then
+                print("sending Packet")
+                modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Packet))
+                --    TMNL.Queue = {}
+                --else
+                --    print("empty queue")
+                --end
             else
                  print("wrong pack")       
             end

@@ -7,6 +7,8 @@ local MASTER_RECEIVE_CHANNEL = 73
 local MASTER_SENDING_CHANNEL = 32
 local totalTurtles = 2
 local buffer = {}
+--read from file 
+local latestTimestamp = 0
 
 local modem = peripheral.find("modem") or error("No modem attached", 0)
 
@@ -73,20 +75,27 @@ if (userInput == 'y') then
                 end
                 --should be 1D array of PACKS objects
                 print(textutils.serialize(buffer))
+
                 table.sort(buffer, function(a, b)
                     return a.timestamp > b.timestamp
                 end)
+
                 logToFile(buffer,"buffer")
                 for i=1, #buffer,1 do
-                    print("Pushing to Masterdb")
-                    modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL,textutils.serialize(buffer[i]))
-                    modem.open(MASTER_RECEIVE_CHANNEL)
-                    channel, replyChannel, message, distance = MineNet.listenOnChannel(MASTER_RECEIVE_CHANNEL)
-                    if (message == 'worked') then
-                        print("Pushed to Masterdb")
-                    else
-                        print("push to DB failed")
+                    currentBuffer = buffer[i]
+                    if (latestTimestamp <= currentBuffer.timestamp)then
+                        latestTimestamp = currentBuffer.timestamp
+                        print("Pushing latest to Masterdb")
+                        modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL,textutils.serialize(currentBuffer))
+                        modem.open(MASTER_RECEIVE_CHANNEL)
+                        channel, replyChannel, message, distance = MineNet.listenOnChannel(MASTER_RECEIVE_CHANNEL)
+                        if (message == 'worked') then
+                            print("Pushed to Masterdb")
+                        else
+                            print("push to DB failed")
+                        end
                     end
+
                 end
 
                 modem.open(RECEIVE_CHANNEL)
