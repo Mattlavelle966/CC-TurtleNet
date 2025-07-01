@@ -7,6 +7,32 @@ function MineNet.logToFile(data,name)
   file.close()
 end
 
+function MineNet.restart()
+    print("rebooting..")
+    sleep(2)
+    os.reboot()
+end
+
+function MineNet.timerListenOnChannel(duration)
+    local timer = os.startTimer(duration)
+    local gotResponse = false
+    repeat
+        local e = { os.pullEvent() }
+        if (e[1] == "modem_message") then
+            channel = e[3]
+            replyChannel = e[4]
+            message = e[5]
+            distance = e[6]
+            gotResponse = true
+
+        elseif (e[1] == "timer") then
+            print("timer triggered")
+            gotResponse = true
+        end
+    until gotResponse
+    return channel, replyChannel, message, distance 
+end
+
 function MineNet.listenOnChannel(ChannelInput)
     -- And wait for a reply
     local event, side, channel, replyChannel, message, distance

@@ -4,22 +4,20 @@ require 'mine_net'
 local modem = peripheral.find("modem") or error("No modem attached", 0)
 local RECEIVE_CHANNEL = 15
 local SENDING_CHANNEL = 43
+--CONFIG
 local MASTER_TURTLE_NUMBER = 2
 modem.open(RECEIVE_CHANNEL)
-function restart()
-    print("rebooting..")
-    sleep(2)
-    os.reboot()
-end
+TMNL.TurtleInit()
+
 
 function MovementLoop()
     print("thread 1")
     while true do
         -- max 55=x, 32=z/y because we are only looking at a one y coord at a time
-        
+       
         for i = 1, 16, 1 do
             data = TMNL.Forward()
-            print(textutils.serialize(data))
+            MineNet.logToFile(data,"data")
             if (data.Result == false) then
                 TMNL.TurnRight()
             end
@@ -40,6 +38,8 @@ function ListenLoop()
                 print("EVENT: " .. textutils.serialize(e[5]))
                 print("sending Packet")
                 modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Packet))
+                elseif (pack == "stop") then
+                MineNet.restart()
             else
                 print("wrong pack")
              end
@@ -47,8 +47,9 @@ function ListenLoop()
     end
 end
 
-    print("Happy Mining")
-    print("waiting")
+print("Happy Mining")
+print("waiting")
+while true do
     C,RC,Message,D = MineNet.listenOnChannel(RECEIVE_CHANNEL)
     if ( Message == "hello") then
         print("Received")
@@ -61,11 +62,10 @@ end
             parallel.waitForAny(MovementLoop,ListenLoop)
         else
             print("begin mining not recieved")
-            restart()
         end
     else
         print("hello was not recieved")
-        restart()
     end
+end
 
     

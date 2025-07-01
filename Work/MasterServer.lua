@@ -27,6 +27,7 @@ if (userInput == 'y') then
         modem.open(RECEIVE_CHANNEL)
         modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "hello")
         print("transmitting on Channel: " .. SENDING_CHANNEL)
+        local tansmit15 = os.startTimer(5)
         -- And wait for a reply
         channel, replyChannel, message, distance = MineNet.listenOnChannel(RECEIVE_CHANNEL)
         if (message == "ready") then
@@ -88,7 +89,8 @@ if (userInput == 'y') then
                 buffer = {}                
             end
         else
-            print("ready not recieved")    
+            print("ready not recieved")
+            MineNet.restart()    
         end
     
     end

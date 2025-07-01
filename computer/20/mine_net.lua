@@ -7,6 +7,35 @@ function MineNet.logToFile(data,name)
   file.close()
 end
 
+function MineNet.restart()
+    print("rebooting..")
+    sleep(2)
+    os.reboot()
+end
+
+function MineNet.timerListenOnChannel(time)
+    local timer = os.startTimer(time)
+    local gotResponse = false
+    repeat
+        local e = { os.pullEvent() }
+        if (e[1] == "modem_message") then
+            message = e[5]
+            packets = textutils.unserialize(message)
+            MineNet.logToFile(packets,"packets")
+            if packets then
+                event, side, channel, replyChannel, message, distance = os.pullEvent("modem_message")
+                gotResponse = true
+            else 
+                print("packet null")
+            end
+        elseif (e[1] == "timer") then
+            print("timer triggered")
+            gotResponse = true
+        end
+    until gotResponse
+    return channel, replyChannel, message, distance 
+end
+
 function MineNet.listenOnChannel(ChannelInput)
     -- And wait for a reply
     local event, side, channel, replyChannel, message, distance

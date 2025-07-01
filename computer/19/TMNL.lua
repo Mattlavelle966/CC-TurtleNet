@@ -12,7 +12,11 @@ TMNL.Facing = 0 -- e.g. relative to starting pos
 -- 0=north, 1=west, 2=south, 3=east
 -- or we return the movement and return it 
 -- reset Packet every day cycle
-
+function TMNL.TurtleInit()
+    for i = 1, 4, 1 do
+        turtle.turnLeft()
+    end
+end
 
 function TMNL.Forward()
     -- rather then a string movement could be a color object as the - 
