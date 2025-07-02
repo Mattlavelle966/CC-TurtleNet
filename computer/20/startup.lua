@@ -30,7 +30,7 @@ function ListenLoop()
     print("thread 2")
     while true do
         local e = { os.pullEvent() }
-        if (e[1] == "modem_message") then
+        if (e[1] == "modem_message" and e[3] == RECEIVE_CHANNEL) then
             print("EVENT: " .. textutils.serialize(e))
 
             pack = e[5]
@@ -54,6 +54,7 @@ while true do
     if ( Message == "hello") then
         print("Received")
         print("sending Ready")
+        sleep(5)
         modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "ready")
         print("reccieved, awaiting response")
         cA,rcA,MessageA,dA = MineNet.listenOnChannel(RECEIVE_CHANNEL)

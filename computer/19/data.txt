@@ -1,6 +1,5 @@
 {
   {
-    Result = false,
-    event = "Movement obstructed",
+    Result = true,
   },
 }

@@ -26,7 +26,7 @@ if (message == 'start slaves') then
     print("transmitting on Channel: " .. SENDING_CHANNEL)
     
     -- And wait for a reply
-    channel, replyChannel, message, distance = MineNet.timerListenOnChannel(5)
+    channel, replyChannel, message, distance = MineNet.listenOnChannel(RECEIVE_CHANNEL)
     if (message == "ready") then
         print("ready")
         modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "begin mining")
@@ -39,7 +39,7 @@ if (message == 'start slaves') then
                 local gotResponse = false
                 repeat
                     local e = { os.pullEvent() }
-                    if (e[1] == "modem_message") then
+                    if (e[1] == "modem_message" and e[3] == RECEIVE_CHANNEL) then
                         message = e[5]
                         packets = textutils.unserialize(message)
                         MineNet.logToFile(packets,"packets")
@@ -56,6 +56,8 @@ if (message == 'start slaves') then
                     elseif (e[1] == "timer" and e[2] == timer) then
                         print("timer triggered")
                         gotResponse = true
+                    else
+                        print("all failed")
                     end
                 until gotResponse
             end
@@ -72,15 +74,15 @@ if (message == 'start slaves') then
                 if (latestTimestamp <= currentBuffer.timestamp)then
                     latestTimestamp = currentBuffer.timestamp
                     print("Pushing latest to Masterdb")
-                    modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL,textutils.serialize(currentBuffer))
                     modem.open(MASTER_RECEIVE_CHANNEL)
-                    channel, replyChannel, message, distance = MineNet.timerListenOnChannel(10)
+                    modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL,textutils.serialize(currentBuffer))
+                    channel, replyChannel, message, distance = MineNet.listenOnChannel(MASTER_RECEIVE_CHANNEL)
+                    
                     if (message == 'worked') then
                         print("Pushed to Masterdb")
                     else
                         print("Master never responded, telling turtles to stop")
-                        modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "stop")
-                        MineNet.restart()
+                        break
                     end
                 end
             end
@@ -89,7 +91,5 @@ if (message == 'start slaves') then
         end
     else
         print("ready not recieved")
-        MineNet.restart()    
     end
-
 end

@@ -37,8 +37,9 @@ end
 
 function packetCollector()
   while true do
+    UI.drawText(42, 37,"  waiting..    ", colors.white)
     local e = { os.pullEvent() }
-    if (e[1] == "modem_message") then
+    if (e[1] == "modem_message" and e[3] == MASTER_RECEIVE_CHANNEL) then
       MineNet.logToFile(textutils.serialize(e), 'e')
       MineNet.logToFile(textutils.serialize(e[5]), 'e5')
 
@@ -53,7 +54,7 @@ function packetCollector()
           x = pack.x
           y = pack.y
           z = pack.z
-          UI.drawText(42, 37, "Mine_Net Online", colors.green)
+          UI.drawText(42, 37, "Mine_Net Online ", colors.green)
           print(("Coords received: x=%d, y=%d, z=%d"):format(x, y, z))
           modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL, 'worked')
           print("updating DB")
@@ -62,14 +63,14 @@ function packetCollector()
           print("getting latest")
           UI.CheckDB(currentLayer)
           print("DB loaded")
-        else
-          MineNet.restart()
+        
         end
       else
         print("No valid packet data in event[5]")
         UI.drawText(42, 37, "MN packet failed", colors.red)
-        sleep(1)
         UI.drawText(42, 38,"retrying...  ", colors.red)
+        UI.drawText(42, 37,"             ", colors.red)
+        UI.drawText(42, 38,"             ", colors.red)
       end
     end
   end
@@ -91,7 +92,7 @@ function drawDemo()
     if (message == 'starting slaves') then
       print("turtle initilized")
       UI.drawText(42, 36, "Mine_Net Init", colors.yellow)
-      
+      modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL,'start slaves')
     end
   end)
 
