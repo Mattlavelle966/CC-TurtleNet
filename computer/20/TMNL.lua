@@ -8,6 +8,7 @@ TMNL.currentCoordinates = { x = 29, y = 1, z = 20 }
 
 
 TMNL.Packet = {}
+TMNL.Queue = {}
 TMNL.Facing = 0 -- e.g. relative to starting pos
 -- 0=north, 1=west, 2=south, 3=east
 -- or we return the movement and return it 
@@ -45,6 +46,13 @@ function TMNL.Forward()
             turtleId = os.computerID(),
             timestamp = os.time("local")
             })
+        table.insert(TMNL.Queue, {
+        x = TMNL.currentCoordinates.x,
+        y = TMNL.currentCoordinates.y,
+        z = TMNL.currentCoordinates.z,
+        turtleId = os.computerID(),
+        timestamp = os.time("local")
+        })
     else
         print(tostring(hasMoved) .. str)        
     end
@@ -73,6 +81,14 @@ function TMNL.Back()
             turtleId = os.computerID(),
             timestamp = os.time("local")
         })
+        table.insert(TMNL.Queue, {
+        x = TMNL.currentCoordinates.x,
+        y = TMNL.currentCoordinates.y,
+        z = TMNL.currentCoordinates.z,
+        turtleId = os.computerID(),
+        timestamp = os.time("local")
+        })
+        
     else
         print(tostring(hasMoved) .. str)        
     end
@@ -93,6 +109,13 @@ function TMNL.Up()
             turtleId = os.computerID(),
             timestamp = os.time("local")
         })
+        table.insert(TMNL.Queue, {
+        x = TMNL.currentCoordinates.x,
+        y = TMNL.currentCoordinates.y,
+        z = TMNL.currentCoordinates.z,
+        turtleId = os.computerID(),
+        timestamp = os.time("local")
+        })
     end
 end
 
@@ -108,6 +131,13 @@ function TMNL.Down()
             z = TMNL.currentCoordinates.z,
             turtleId = os.computerID(),
             timestamp = os.time("local")
+        })
+        table.insert(TMNL.Queue, {
+        x = TMNL.currentCoordinates.x,
+        y = TMNL.currentCoordinates.y,
+        z = TMNL.currentCoordinates.z,
+        turtleId = os.computerID(),
+        timestamp = os.time("local")
         })
     end
 end

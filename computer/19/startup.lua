@@ -37,7 +37,8 @@ function ListenLoop()
             if (pack == "send latest" .. tostring(MASTER_TURTLE_NUMBER)) then
                 print("EVENT: " .. textutils.serialize(e[5]))
                 print("sending Packet")
-                modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Packet))
+                modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Queue))
+                TMNL.Queue = {}
             elseif (pack == "stop") then
                 MineNet.restart()
             else
