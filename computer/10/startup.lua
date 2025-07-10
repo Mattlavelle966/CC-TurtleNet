@@ -5,7 +5,7 @@ local RECEIVE_CHANNEL = 43
 local SENDING_CHANNEL = 15
 local MASTER_RECEIVE_CHANNEL = 73
 local MASTER_SENDING_CHANNEL = 32
-local totalTurtles = 2
+local totalTurtles = 5
 local buffer = {}
 --read from file 
 local latestTimestamp = 0
@@ -80,8 +80,9 @@ if (message == 'start slaves') then
                     
                     if (message == 'worked') then
                         print("Pushed to Masterdb")
+
                     else
-                        print("Master never responded, telling turtles to stop")
+                        print("message was invalid")
                         break
                     end
                 end

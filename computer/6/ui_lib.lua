@@ -6,6 +6,10 @@ UI = {
 }
 BLOCK_DB = {}
 
+local MAX_X = 100
+local MAX_Y = 100
+local MAX_Z = 100
+
 function UI.init(monitor)
   UI.monitor = monitor
   UI.width, UI.height = monitor.getSize()
@@ -65,16 +69,17 @@ end
 
 --NEW
 function UI.initBlockDB() 
-  for layers = 1, 100 do
+  for layers = 1, MAX_Y do
     BLOCK_DB[layers] = {}
-    for col = 1, 55 do
+    for col = 1, MAX_X do
       BLOCK_DB[layers][col] = {}  -- or a default value like false or "empty"
-        for row = 1, 32 do
+        for row = 1, MAX_Z do
               BLOCK_DB[layers][col][row] = colors.gray
             end
         end
     end
 end
+
 --NEW
 --Note changeGridColor changes the database not the screen
 function UI.changeGridColor(col, row, layer, color)
@@ -83,11 +88,15 @@ function UI.changeGridColor(col, row, layer, color)
     end
 end
 --NEW
-function UI.CheckDB(layer)
+function UI.CheckDB(layer,UI_X,UI_Y)
   selectedLayer = {}
-  UI.drawGrid(2, 2, 55, 32, 1, 1, function(col, row)
-    if BLOCK_DB[layer] and BLOCK_DB[layer][col] and BLOCK_DB[layer][col][row] then
-      selectedLayer = BLOCK_DB[layer][col][row] 
+  UI.drawGrid(2, 2, 55, 35, 1, 1, function(col, row)
+
+    local dbX = UI_X + col - 1
+    local dbZ = UI_Y + row - 1
+
+    if BLOCK_DB[layer] and BLOCK_DB[layer][dbX] and BLOCK_DB[layer][dbX][dbZ] then
+      selectedLayer = BLOCK_DB[layer][dbX][dbZ] 
     else 
       selectedLayer = colors.red -- only if empty for some reason
     end
