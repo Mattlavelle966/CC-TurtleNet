@@ -121,7 +121,35 @@ function UI.GetSavedDB()
       print("No Saved DB available")
   end
 end
-
+--NEW
+function UI.getCurrentGridTurtles(pack)
+  if (type(pack) == "table")then
+    for key, value in pairs(pack) do
+      local X = value[1].x
+      local Z = value[1].z
+      local Y = value[1].y
+      UI.changeGridColor(X,Z,Y, colors.yellow)
+    end
+  else 
+    MineNet.logToFile(textutils.serialize({a={}}), 'nope')
+  end
+end
+--NEW
+function UI.getLastGridTurtles(pack)
+  MineNet.logToFile(textutils.serialize(pack), 'val')
+  
+  if (type(pack) == "table")then
+    for key, value in pairs(pack) do
+      MineNet.logToFile(textutils.serialize(value[1]), 'val2')
+      local X = value[1].x
+      local Z = value[1].z
+      local Y = value[1].y
+      UI.changeGridColor(X,Z,Y, colors.black)
+    end
+  else 
+    MineNet.logToFile(textutils.serialize({a={}}), 'nope2')
+  end
+end
 function UI.handleTouch(x, y)
   for _, el in ipairs(UI.elements) do
     if el.type == "button" then

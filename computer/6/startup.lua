@@ -17,7 +17,11 @@ local currentLayer = 1
 local colorCycle = { colors.red, colors.green, colors.blue, colors.yellow, colors.orange }
 local colorIndex = 1
 local toggleChecker = false
-local LatestTimestamp
+local LatestTimestamp = false
+local turtleCurrentPositions = {}
+local lastTurtlePosition = {}
+local found = false
+
 
 local UI_X = 1
 local UI_Y = 1
@@ -57,12 +61,45 @@ function packetCollector()
           x = pack.x
           y = pack.y
           z = pack.z
-
+          
+          
+          --checks for empty table of positions
+          MineNet.logToFile(textutils.serialize(turtleCurrentPositions), 'loc')
+          if next(turtleCurrentPositions) then
+            --check all tables within turtleCurrentPositions
+            for key, value in pairs(turtleCurrentPositions) do
+              --check if recived packet contains matching ID's
+              if (pack.turtleId == value[1].turtleId)then
+                --is it newer then the other packets we have 
+                if(pack.timestamp >= value[1].timestamp)then
+                  --replace the turtleCurrentPositions index obj
+                  lastTurtlePosition[value[1].turtleId] = {value[1]}
+                  turtleCurrentPositions[pack.turtleId] = {pack}
+                else
+                  --if turtleCurrentPositions timestamp was greater then the new one do nothing
+                  found = true
+                  break
+                end
+              end
+            end
+            --if the current packet.turtleId is not equal to any turtleID in the table add it 
+            if not found then
+              turtleCurrentPositions[pack.turtleId] = {pack}
+            end
+          --if empty add the current packet as a position
+          else
+            turtleCurrentPositions[pack.turtleId] = {pack}
+          end
+          
+            
           UI.drawText(42, 37, "Mine_Net Online ", colors.green)
           print(("Coords received: x=%d, y=%d, z=%d"):format(x, y, z))
           modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL, 'worked')
           print("updating DB")
           UI.changeGridColor(x,z,y, colors.black)
+          --MineNet.logToFile(textutils.serialize(turtleCurrentPositions), 'loc')
+          UI.getCurrentGridTurtles(turtleCurrentPositions)
+          UI.getLastGridTurtles(lastTurtlePosition)
           currentLayer = y
           print("getting latest")
           UI.CheckDB(currentLayer, UI_X, UI_Y)
@@ -103,6 +140,10 @@ function drawDemo()
   end)
 
   UI.drawButton("btn2", 14, 38, 3, 1, "Save", colors.white, colors.green, function()
+    UI.SaveDB()
+  end)
+
+  UI.drawButton("btn3", 19, 38, 3, 1, "loc", colors.white, colors.orange, function()
     UI.SaveDB()
   end)
   
