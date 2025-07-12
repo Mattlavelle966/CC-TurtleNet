@@ -5,7 +5,7 @@ require "mine_net"
 
 MineNetUI = {}
 
-local monitorSide = "top"
+local monitorSide = "left"
 local monitor = peripheral.wrap(monitorSide)
 UI.init(monitor)
 
@@ -29,7 +29,7 @@ local textColor = colors.black
 local m = UI.monitor
 local completionNum = .0
 -- Helper to draw a filled box
-local statusBars = {}
+MineNetUI.statusBars = {}
 
 -- Box positions
 local clientX, clientY = ERDStartX, ERDStartY
@@ -41,18 +41,18 @@ local streamX, streamY = packetManipX + boxW + 8, packetManipY
 
 
 
-function drawHeader()
+function MineNetUI.drawHeader()
   UI.drawText(2, 1, "MineNetTracker", colors.white)
 end
 
-function statusBarSetter(color,locX,locY,Width)
+function MineNetUI.statusBarSetter(color,locX,locY,Width)
   monitor.setBackgroundColor(color)
   monitor.setCursorPos(locX, locY)
   monitor.write((" "):rep(Width))
 
 end
 
-function drawNodeSection()
+function MineNetUI.drawNodeSection()
   -- Section Title
   UI.drawText(18, 2, "Node Connection State", colors.white, colors.black)
   -- Draw nodes
@@ -80,72 +80,72 @@ function drawNodeSection()
     local statusWidth = nodeWidth - 2
     local statusBarY = y + nodeHeight
     local statusBarX = x+1
-    table.insert(statusBars,{
+    table.insert(MineNetUI.statusBars,{
       X = x+1,
       Y = y + nodeHeight,
       width = statusWidth
       
     })
-    statusBarSetter(colors.red, statusBarX,statusBarY,statusWidth)
+    MineNetUI.statusBarSetter(colors.red, statusBarX,statusBarY,statusWidth)
   end
 end
 
 --box Connections
-function ClientConnector(color)
+function MineNetUI.ClientConnector(color)
   UI.drawGrid(clientX + boxW, clientY + math.floor(boxH / 2), 4, 1, 1, 1, function() return color end)
 end
-function NodesConnector(color)
+function MineNetUI.NodesConnector(color)
   UI.drawGrid(nodesX + boxW, nodesY + math.floor(boxH / 2), 4, 1, 1, 1, function() return color end)
 end
-function CollectorConnector(color)
+function MineNetUI.CollectorConnector(color)
   UI.drawGrid(nodesX - 11, nodesY + boxH + 3, 1, 1, 1, 1, function() return color end)
   UI.drawGrid(nodesX - 11, nodesY + boxH + 2, 41, 1, 1, 1, function() return color end)
   UI.drawGrid(packetColX + boxW + 2, packetColY + boxH, 1, 3, 1, 1, function() return color end)
 end
-function ManipConnector(color)
+function MineNetUI.ManipConnector(color)
   UI.drawGrid(packetManipX + boxW + 2, packetManipY + math.floor(boxH / 2), 6, 1, 1, 1, function() return color end)
 end
   
 
   -- Draw main boxes
-function ClientBox(color)
+function MineNetUI.ClientBox(color)
   UI.drawBox(clientX, clientY, boxW, boxH, color, "Client",m)
   if(color == colors.green)then
-    ClientConnector(color)
+    MineNetUI.ClientConnector(color)
     completionNum = .1    
   elseif color == colorSecondary then  
-    ClientConnector(color)
+    MineNetUI.ClientConnector(color)
   end  
 
 end
-function NodesBox(color)
+function MineNetUI.NodesBox(color)
   UI.drawBox(nodesX, nodesY, boxW, boxH, color, "Nodes",m)
   if(color == colors.green)then
-    NodesConnector(color)
+    MineNetUI.NodesConnector(color)
     completionNum = .2    
   elseif color == colorSecondary then  
-    NodesConnector(color)
+    MineNetUI.NodesConnector(color)
   end
 end
-function PackerCollBox(color)
+function MineNetUI.PackerCollBox(color)
   UI.drawBox(packetColX, packetColY, boxW + 4, boxH, color, "Packet Coll.",m)
   if(color == colors.green)then
-    CollectorConnector(color)
+    MineNetUI.CollectorConnector(color)
     completionNum = .4 
   elseif color == colorSecondary then   
-    CollectorConnector(color)
+    MineNetUI.CollectorConnector(color)
   end
 end
-function ManipBox(color)
+function MineNetUI.ManipBox(color)
   UI.drawBox(packetManipX, packetManipY, boxW + 2, boxH, color, "Packet Manip",m)
   if(color == colorMain)then
-    ManipConnector(color)
+    MineNetUI.ManipConnector(color)
     completionNum = .8
   elseif color == colorSecondary then
-    ManipConnector(color)
+    MineNetUI.ManipConnector(color)
   end
 end
-function StreamBox(color)
+function MineNetUI.StreamBox(color)
   UI.drawBox(streamX, streamY, boxW, boxH, color, "Stream",m)
   if(color == colors.green)then
     completionNum = 1   
@@ -154,7 +154,7 @@ end
 
 
 
-function drawProgressBar()
+function MineNetUI.drawProgressBar()
   local x = 4
   local y = 35
   local width = 45
@@ -173,7 +173,7 @@ function drawProgressBar()
   end
 end
 
-function drawResetButton()
+function MineNetUI.drawResetButton()
   local label = "Reset"
   local w = #label + 2
   local x = 47
@@ -186,33 +186,49 @@ function drawResetButton()
 end
 
 -- Draw all UI components
-UI.clear()
-drawHeader()
-drawResetButton()
-drawNodeSection()
-ClientBox(colorSecondary)
-NodesBox(colorSecondary)
-PackerCollBox(colorSecondary)
-ManipBox(colorSecondary)
-StreamBox(colorSecondary)
-drawProgressBar()
-sleep(2)
-ClientBox(colorMain)
-drawProgressBar()
-sleep(2)
-NodesBox(colors.yellow)
-for i, value in ipairs(statusBars) do
-  sleep(.5)
-  statusBarSetter(colorMain, value.X,value.Y,value.width)
+
+function MineNetUI.initUI()
+  UI.clear()
+  MineNetUI.drawHeader()
+  MineNetUI.drawResetButton()
+  MineNetUI.drawNodeSection()
+  MineNetUI.ClientBox(colorSecondary)
+  MineNetUI.NodesBox(colorSecondary)
+  MineNetUI.PackerCollBox(colorSecondary)
+  MineNetUI.ManipBox(colorSecondary)
+  MineNetUI.StreamBox(colorSecondary)
+  MineNetUI.drawProgressBar()
 end
-NodesBox(colorMain)
-drawProgressBar()
-PackerCollBox(colorMain)
-drawProgressBar()
-sleep(2)
-ManipBox(colorMain)
-drawProgressBar()
-sleep(2)
-StreamBox(colorMain)
-drawProgressBar()
-sleep(2)
+function MineNet.loopUiInit()
+  MineNetUI.drawNodeSection()
+  MineNetUI.NodesBox(colorSecondary)
+  MineNetUI.PackerCollBox(colorSecondary)
+  MineNetUI.ManipBox(colorSecondary)
+  MineNetUI.StreamBox(colorSecondary)
+  MineNetUI.ClientConnector(colorSecondary)
+  MineNetUI.NodesConnector(colorSecondary)
+  MineNetUI.CollectorConnector(colorSecondary)
+  MineNetUI.ManipConnector(colorSecondary)
+  completionNum = .0
+  MineNetUI.drawProgressBar()
+end
+
+
+--MineNetUI.initUI()
+
+--MineNetUI.ClientBox(colorMain)
+--MineNetUI.drawProgressBar()
+
+--MineNetUI.NodesBox(colors.yellow)
+--for i, value in ipairs(statusBars) do
+  --MineNetUI.statusBarSetter(colorMain, value.X,value.Y,value.width)
+--end
+--MineNetUI.NodesBox(colorMain)
+--MineNetUI.drawProgressBar()
+
+--MineNetUI.PackerCollBox(colorMain)
+--MineNetUI.drawProgressBar()
+--MineNetUI.ManipBox(colorMain)
+--MineNetUI.drawProgressBar()
+--MineNetUI.StreamBox(colorMain)
+--MineNetUI.drawProgressBar()
