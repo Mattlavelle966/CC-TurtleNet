@@ -62,7 +62,7 @@ function packetCollector()
           y = pack.y
           z = pack.z
           
-          
+          --below deals with turtle locating
           --checks for empty table of positions
           MineNet.logToFile(textutils.serialize(turtleCurrentPositions), 'loc')
           if next(turtleCurrentPositions) then
