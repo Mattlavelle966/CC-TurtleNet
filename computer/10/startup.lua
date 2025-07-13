@@ -42,7 +42,7 @@ if (message == 'start slaves') then
             for i=1,totalTurtles,1 do
                 print("requesting turtle" .. i)
                 modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "send latest"..i)
-                local timer = os.startTimer(5)
+                local timer = os.startTimer(2)
                 local gotResponse = false
                 repeat
                     local e = { os.pullEvent() }
@@ -50,20 +50,21 @@ if (message == 'start slaves') then
                         message = e[5]
                         packets = textutils.unserialize(message)
                         MineNet.logToFile(packets,"packets")
-                        MineNetUI.statusBarSetter(colors.green, MineNetUI.statusBars[i].X, MineNetUI.statusBars[i].Y, MineNetUI.statusBars[i].width)
-
+                        
                         if packets then
                             
                             for j=1,#packets,1 do
                                 table.insert(buffer,packets[j])
                             end
-
+                            
                             gotResponse = true
+                            MineNetUI.statusBarSetter(colors.green, MineNetUI.statusBars[i].X, MineNetUI.statusBars[i].Y, MineNetUI.statusBars[i].width)
                         else 
                             print("packet null")
                         end
                     elseif (e[1] == "timer" and e[2] == timer) then
                         print("timer triggered")
+                        MineNetUI.statusBarSetter(colors.red, MineNetUI.statusBars[i].X, MineNetUI.statusBars[i].Y, MineNetUI.statusBars[i].width)
                         gotResponse = true
                     else
                         print("all failed")
@@ -108,6 +109,7 @@ if (message == 'start slaves') then
             modem.open(RECEIVE_CHANNEL)
             buffer = {}                
         end
+        
         MineNet.loopUiInit()
     else
         print("ready not recieved")

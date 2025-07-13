@@ -211,6 +211,9 @@ function MineNet.loopUiInit()
   MineNetUI.ManipConnector(colorSecondary)
   completionNum = .0
   MineNetUI.drawProgressBar()
+  for i,val in ipairs(MineNetUI.statusBars) do
+    MineNetUI.statusBarSetter(colors.lightGray, val.X, val.Y, val.width)
+  end
 end
 
 

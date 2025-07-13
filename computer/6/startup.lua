@@ -10,6 +10,7 @@ MAX_Z = 100
 
 local MASTER_SENDING_CHANNEL = 73
 local MASTER_RECEIVE_CHANNEL = 32
+local NODE_SEND_CHANNEL = 15
 local monitorSide = "right"
 local monitor = peripheral.wrap(monitorSide)
 local modem = peripheral.find("modem") or error("No modem attached", 0)
@@ -21,8 +22,8 @@ local LatestTimestamp = false
 local turtleCurrentPositions = {}
 local lastTurtlePosition = {}
 local found = false
-
-
+local toggleNodeTracking = true
+local buttonBarYPos = 38
 local UI_X = 1
 local UI_Y = 1
 
@@ -33,7 +34,7 @@ modem.open(MASTER_RECEIVE_CHANNEL)
 
 function getClicks()
   while true do
-    UI.drawText(37, 38, tostring(currentLayer) .. "  ", colors.green)
+    UI.drawText(33, buttonBarYPos, "Y:".. tostring(currentLayer) .. "  ", colors.green)
     local e, side, x, y = os.pullEvent("monitor_touch")
     if side == monitorSide then
       UI.handleTouch(x, y)
@@ -43,7 +44,7 @@ end
 
 function packetCollector()
   while true do
-    UI.drawText(42, 38,"  waiting..    ", colors.white)
+    UI.drawText(42, buttonBarYPos,"  waiting..    ", colors.white)
     UI.drawText(42, 1,"Y".. tostring(UI_Y) .."-"..tostring(UI_Y).."  X".. tostring(UI_X).."-"..tostring(UI_X+55).."  ", colors.white)
     local e = { os.pullEvent() }
     if (e[1] == "modem_message" and e[3] == MASTER_RECEIVE_CHANNEL) then
@@ -52,6 +53,7 @@ function packetCollector()
 
       pack = textutils.unserialize(e[5])
       if type(pack) == "table" then
+        UI.drawText(42, buttonBarYPos,"collecting..   ", colors.white)
         local x, y, z
         if pack.x and pack.y and pack.z and
           pack.x >= 1 and pack.x <= MAX_X and
@@ -92,14 +94,17 @@ function packetCollector()
           end
           
             
-          UI.drawText(42, 37, "Mine_Net Online ", colors.green)
+          UI.drawText(42, 37, "Mine_Net Online   ", colors.green)
           print(("Coords received: x=%d, y=%d, z=%d"):format(x, y, z))
           modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL, 'worked')
           print("updating DB")
           UI.changeGridColor(x,z,y, colors.black)
+          UI.drawText(42, buttonBarYPos,"Pushed to DB     ", colors.green)
           --MineNet.logToFile(textutils.serialize(turtleCurrentPositions), 'loc')
-          UI.getCurrentGridTurtles(turtleCurrentPositions)
-          UI.getLastGridTurtles(lastTurtlePosition)
+          if toggleNodeTracking then
+            UI.getCurrentGridTurtles(turtleCurrentPositions)
+            UI.getLastGridTurtles(lastTurtlePosition)
+          end
           currentLayer = y
           print("getting latest")
           UI.CheckDB(currentLayer, UI_X, UI_Y)
@@ -109,9 +114,9 @@ function packetCollector()
       else
         print("No valid packet data in event[5]")
         UI.drawText(42, 37, "MN packet failed", colors.red)
-        UI.drawText(42, 38,"retrying...  ", colors.red)
+        UI.drawText(42, buttonBarYPos,"retrying...  ", colors.red)
         UI.drawText(42, 37,"             ", colors.red)
-        UI.drawText(42, 38,"             ", colors.red)
+        UI.drawText(42, buttonBarYPos,"             ", colors.red)
       end
     end
   end
@@ -123,31 +128,41 @@ function drawDemo()
 
   UI.GetSavedDB()
 
-  UI.drawText(2, 1, "ComputerCraft UI Demo " .. os.time("local"), colors.cyan)
+  UI.drawText(2, 1, "MineNetUI " .. os.time("local"), colors.cyan)
 
-  UI.drawButton("btn1", 2, 38, 3, 1, "Connect", colors.white, colors.blue, function()
+  UI.drawButton("btn1", 3, buttonBarYPos, 3, 1, "Connect", colors.white, colors.blue, function()
     print("press")
     modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL,'start slaves')
     print("sent")
-    UI.drawText(42, 35, "Loading...", colors.white)
+    UI.drawText(42, 37, "Loading...   ", colors.white)
     print("waiting for master")
     channel, replyChannel, message, distance = MineNet.listenOnChannel(MASTER_RECEIVE_CHANNEL)
     if (message == 'starting slaves') then
       print("turtle initilized")
-      UI.drawText(42, 36, "Mine_Net Init", colors.yellow)
+      UI.drawText(42, buttonBarYPos, "Mine_Net Init    ", colors.yellow)
       modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL,'start slaves')
     end
   end)
 
-  UI.drawButton("btn2", 14, 38, 3, 1, "Save", colors.white, colors.green, function()
-    UI.SaveDB()
+  UI.drawButton("btn2", 10, buttonBarYPos, 3, 1, "Track", colors.white, colors.green, function()
+    
   end)
 
-  UI.drawButton("btn3", 19, 38, 3, 1, "loc", colors.white, colors.orange, function()
-    UI.SaveDB()
+  UI.drawButton("btn3", 15, buttonBarYPos, 3, 1, "loc", colors.white, colors.orange, function()
+    if toggleNodeTracking then
+      toggleNodeTracking = false
+    else 
+      toggleNodeTracking = true
+    end
+    UI.ResetTurtlePos()
+
   end)
-  
-  UI.drawButton("stop", 26, 38, 3, 1, "reset", colors.white, colors.red, function()
+    UI.drawButton("callHome", 20, buttonBarYPos, 3, 1, "Call", colors.white, colors.orange, function()
+    -- should call the turtles back to home E.G. not their starting pos rather where fuel 
+    modem.transmit(NODE_SEND_CHANNEL,MASTER_RECEIVE_CHANNEL,"stop")
+
+  end)
+  UI.drawButton("stop", 25, buttonBarYPos, 3, 1, "reset", colors.white, colors.red, function()
     UI.clear()
     UI.drawText(2, 2, "Program restarting.", colors.red)
     sleep(1)
@@ -156,7 +171,7 @@ function drawDemo()
     MineNet.restart()
     end)
     
-  UI.drawButton("uplayer", 33, 38, 3, 1, "-", colors.white, colors.red, function()
+  UI.drawButton("uplayer", 31, buttonBarYPos, 3, 1, "-", colors.white, colors.red, function()
     if currentLayer <= 1 then
       currentLayer = 100
     else
@@ -165,7 +180,7 @@ function drawDemo()
     UI.CheckDB(currentLayer, UI_X,UI_Y)
     end)
 
-  UI.drawButton("downlayer", 39, 38, 3, 1, "+", colors.white, colors.red, function()
+  UI.drawButton("downlayer", 39, buttonBarYPos, 3, 1, "+", colors.white, colors.red, function()
     if currentLayer >= 100 then
       currentLayer = 1
     else

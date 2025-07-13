@@ -88,6 +88,19 @@ function UI.changeGridColor(col, row, layer, color)
     end
 end
 --NEW
+function UI.ResetTurtlePos()
+  for layer, cols in pairs(BLOCK_DB) do
+    for col, rows in pairs(cols) do
+        for row =1, #rows do
+            -- Example condition: check if the color is "yellow"
+            if rows[row] == colors.yellow then
+                BLOCK_DB[layer][col][row] = colors.black
+            end
+        end
+    end
+  end
+end
+--NEW
 function UI.CheckDB(layer,UI_X,UI_Y)
   selectedLayer = {}
   UI.drawGrid(2, 2, 55, 35, 1, 1, function(col, row)
@@ -105,6 +118,7 @@ function UI.CheckDB(layer,UI_X,UI_Y)
 end
 --NEW
 function UI.SaveDB()
+  UI.ResetTurtlePos()
   file = fs.open("BLOCK_DB.txt", "w")
   file.write(textutils.serialize(BLOCK_DB))
   file.close()
