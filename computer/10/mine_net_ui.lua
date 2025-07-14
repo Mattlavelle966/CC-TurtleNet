@@ -157,7 +157,7 @@ end
 function MineNetUI.drawProgressBar()
   local x = 4
   local y = 35
-  local width = 45
+  local width = 50
 
   -- Background (gray)
   monitor.setBackgroundColor(colors.lightGray)
@@ -175,16 +175,18 @@ end
 
 function MineNetUI.drawResetButton()
   local label = "Reset"
-  local w = #label + 2
   local x = 47
   local y = 1
 
-  monitor.setBackgroundColor(colors.red)
-  monitor.setCursorPos(x, y)
-  monitor.write((" "):rep(w))
-  UI.drawText(x + 1, y, label, colors.white, colors.red)
+  UI.drawButton("1", x, y, 3, 1, label, colors.white, colors.red, function()
+    MineNet.restart()
+  end)
 end
-
+function MineNetUI.ResetNodeStatusBars()
+  for i,val in ipairs(MineNetUI.statusBars) do
+    MineNetUI.statusBarSetter(colors.red, val.X, val.Y, val.width)
+  end
+end
 -- Draw all UI components
 
 function MineNetUI.initUI()
@@ -211,9 +213,7 @@ function MineNet.loopUiInit()
   MineNetUI.ManipConnector(colorSecondary)
   completionNum = .0
   MineNetUI.drawProgressBar()
-  for i,val in ipairs(MineNetUI.statusBars) do
-    MineNetUI.statusBarSetter(colors.lightGray, val.X, val.Y, val.width)
-  end
+  MineNetUI.ResetNodeStatusBars()
 end
 
 

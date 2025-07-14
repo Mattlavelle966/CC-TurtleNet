@@ -17,11 +17,11 @@ function MineNet.attemptsTimerEventListener(channel,duration,totalAttempts)
     local timerID = os.startTimer(duration)
     local gotResponse = false
     local attempts = 0 
-    local channel, replyChannel, message, distance 
+    local channelRecive, replyChannel, message, distance 
     repeat
         local e = { os.pullEvent() }
         if (e[1] == "modem_message" and e[3] == channel) then
-            channel = e[3]
+            channelRecive = e[3]
             replyChannel = e[4]
             message = e[5]
             distance = e[6]
@@ -36,17 +36,17 @@ function MineNet.attemptsTimerEventListener(channel,duration,totalAttempts)
             end
         end
     until gotResponse
-    return channel, replyChannel, message, distance 
+    return channelRecive, replyChannel, message, distance 
 end
 
 function MineNet.timerListenOnChannel(channel, duration)
     local timerID = os.startTimer(duration)
     local gotResponse = false
-    local channel, replyChannel, message, distance 
+    local channelRecive, replyChannel, message, distance 
     repeat
         local e = { os.pullEvent() }
         if (e[1] == "modem_message" and e[3] == channel) then
-            channel = e[3]
+            channelRecive = e[3]
             replyChannel = e[4]
             message = e[5]
             distance = e[6]
@@ -57,7 +57,7 @@ function MineNet.timerListenOnChannel(channel, duration)
             gotResponse = true
         end
     until gotResponse
-    return channel, replyChannel, message, distance 
+    return channelRecive, replyChannel, message, distance 
 end
 
 function MineNet.listenOnChannel(ChannelInput)

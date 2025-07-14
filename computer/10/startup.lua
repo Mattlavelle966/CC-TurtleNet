@@ -14,35 +14,13 @@ MineNetUI.initUI()
 local modem = peripheral.find("modem") or error("No modem attached", 0)
 
 
--- Send our message
---temporary terminal till a startup file 
-modem.open(MASTER_RECEIVE_CHANNEL) -- Open 43 so we can receive replies
-print("waiting for UI Master")
-MineNetUI.ClientBox(colors.yellow)
-channel, replyChannel, message, distance = MineNet.listenOnChannel(MASTER_RECEIVE_CHANNEL)
-print("master heard")
---ui
-MineNetUI.ClientBox(colors.green)
-MineNetUI.drawProgressBar()
-
-modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL,'starting slaves')
-if (message == 'start slaves') then 
-    modem.open(RECEIVE_CHANNEL)
-    modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "hello")
-    print("transmitting on Channel: " .. SENDING_CHANNEL)
-    --ui
-    MineNetUI.NodesBox(colors.yellow)
-    -- And wait for a reply
-    channel, replyChannel, message, distance = MineNet.listenOnChannel(RECEIVE_CHANNEL)
-    if (message == "ready") then
-        print("ready")
-        modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "begin mining")
-        while true do
+function StreamLoop()
+    while true do
             print("awaiting Turtles")
             for i=1,totalTurtles,1 do
                 print("requesting turtle" .. i)
                 modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "send latest"..i)
-                local timer = os.startTimer(2)
+                local timer = os.startTimer(.5)
                 local gotResponse = false
                 repeat
                     local e = { os.pullEvent() }
@@ -65,6 +43,7 @@ if (message == 'start slaves') then
                     elseif (e[1] == "timer" and e[2] == timer) then
                         print("timer triggered")
                         MineNetUI.statusBarSetter(colors.red, MineNetUI.statusBars[i].X, MineNetUI.statusBars[i].Y, MineNetUI.statusBars[i].width)
+
                         gotResponse = true
                     else
                         print("all failed")
@@ -109,6 +88,69 @@ if (message == 'start slaves') then
             modem.open(RECEIVE_CHANNEL)
             buffer = {}                
         end
+end
+function getClicks()
+  while true do
+    local e, side, x, y = os.pullEvent("monitor_touch")
+    if side == monitorSide then
+      UI.handleTouch(x, y)
+    end
+  end
+end
+function MainThreads()
+    parallel.waitForAny(StreamLoop,getClicks)
+end
+function CheckIfStarted()
+    print("checking")
+    local message = "Are you running #"
+    for i = 1, totalTurtles, 1 do
+        MineNetUI.NodesBox(colors.yellow)
+        modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,"Are you running #" .. tostring(i))
+        MineNetUI.statusBarSetter(colors.yellow, MineNetUI.statusBars[i].X, MineNetUI.statusBars[i].Y, MineNetUI.statusBars[i].width)
+
+        local channel, replyChannel, pack, distance = MineNet.timerListenOnChannel(RECEIVE_CHANNEL,.5)
+        if (pack == "Yes")then
+            print("heard")
+            MineNetUI.ClientBox(colors.green)
+            MainThreads()
+        else
+            MineNetUI.NodesBox(colors.lightGray)
+            print("nothing")
+        end
+    end
+    MineNetUI.ResetNodeStatusBars()
+    print("No logging turtles found")
+
+end
+
+
+-- Send our message
+--temporary terminal till a startup file 
+modem.open(MASTER_RECEIVE_CHANNEL) -- Open 43 so we can receive replies
+CheckIfStarted()
+print("waiting for UI Master")
+MineNetUI.ClientBox(colors.yellow)
+channel, replyChannel, message, distance = MineNet.listenOnChannel(MASTER_RECEIVE_CHANNEL)
+print("master heard")
+--ui
+MineNetUI.ClientBox(colors.green)
+MineNetUI.drawProgressBar()
+
+
+
+modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL,'starting slaves')
+if (message == 'start slaves') then 
+    modem.open(RECEIVE_CHANNEL)
+    modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "hello")
+    print("transmitting on Channel: " .. SENDING_CHANNEL)
+    --ui
+    MineNetUI.NodesBox(colors.yellow)
+    -- And wait for a reply
+    channel, replyChannel, message, distance = MineNet.listenOnChannel(RECEIVE_CHANNEL)
+    if (message == "ready") then
+        print("ready")
+        modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "begin mining")
+        MainThreads()
         
         MineNet.loopUiInit()
     else

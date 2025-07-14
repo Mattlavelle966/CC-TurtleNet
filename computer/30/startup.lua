@@ -5,7 +5,7 @@ local modem = peripheral.find("modem") or error("No modem attached", 0)
 local RECEIVE_CHANNEL = 15
 local SENDING_CHANNEL = 43
 --CONFIG
-local MASTER_TURTLE_NUMBER = 3
+local MASTER_TURTLE_NUMBER = "3"
 modem.open(RECEIVE_CHANNEL)
 TMNL.TurtleInit()
 
@@ -34,13 +34,16 @@ function ListenLoop()
             print("EVENT: " .. textutils.serialize(e))
 
             pack = e[5]
-            if (pack == "send latest" .. tostring(MASTER_TURTLE_NUMBER)) then    
+            if (pack == "send latest" .. MASTER_TURTLE_NUMBER) then    
                 print("EVENT: " .. textutils.serialize(e[5]))
                 print("sending Packet")
                  modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Queue))
                 TMNL.Queue = {}
             elseif (pack == "stop") then
                 MineNet.restart()
+            elseif (pack == "Are you running #" .. MASTER_TURTLE_NUMBER) then
+                modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,"Yes")
+                print("Master Is Starting")
             else
                 print("wrong pack")
              end
