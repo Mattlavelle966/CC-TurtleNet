@@ -1,11 +1,17 @@
 
 require 'TMNL'
 require 'mine_net'
+TMNL.GetSavedDB()
 local modem = peripheral.find("modem") or error("No modem attached", 0)
 local RECEIVE_CHANNEL = 15
 local SENDING_CHANNEL = 43
 --CONFIG
-local MASTER_TURTLE_NUMBER = "1"
+
+CheckFirstLoad()
+TMNL.NodeId = TMNL.SaveObject.NetId
+TMNL.currentCoordinates = { x = TMNL.SaveObject.X, y = TMNL.SaveObject.Y, z = TMNL.SaveObject.Z }
+TMNL.Facing = TMNL.SaveObject.Facing
+
 
 modem.open(RECEIVE_CHANNEL)
 TMNL.TurtleInit()
@@ -35,14 +41,15 @@ function ListenLoop()
             print("EVENT: " .. textutils.serialize(e))
 
             pack = e[5]
-            if (pack == "send latest" .. MASTER_TURTLE_NUMBER) then    
+            TMNL.SaveToDB()
+            if (pack == "send latest" .. tostring(TMNL.NodeId)) then    
                 print("EVENT: " .. textutils.serialize(e[5]))
                 print("sending Packet")
                  modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,textutils.serialize(TMNL.Queue))
                 TMNL.Queue = {}
             elseif (pack == "stop") then
                 MineNet.restart()
-            elseif (pack == "Are you running #" .. MASTER_TURTLE_NUMBER) then
+            elseif (pack == "Are you running #" .. tostring(TMNL.NodeId)) then
                 modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,"Yes")
                 print("Master Is Starting")
             else

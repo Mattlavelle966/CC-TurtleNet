@@ -19,6 +19,8 @@ local colorCycle = { colors.red, colors.green, colors.blue, colors.yellow, color
 local colorIndex = 1
 local toggleChecker = false
 local LatestTimestamp = false
+--totalturtles is also the length of turtleCurrentPositions but saving that must be added
+local totalTurtles = 5
 local turtleCurrentPositions = {}
 local lastTurtlePosition = {}
 local found = false
@@ -113,13 +115,31 @@ function packetCollector()
         end
       else
         print("No valid packet data in event[5]")
-        UI.drawText(42, 37, "MN packet failed", colors.red)
+        UI.drawText(42, 37, "---------------", colors.red)
         UI.drawText(42, buttonBarYPos,"retrying...  ", colors.red)
-        UI.drawText(42, 37,"             ", colors.red)
-        UI.drawText(42, buttonBarYPos,"             ", colors.red)
       end
     end
   end
+end
+--experimental
+function CheckIfStarted()
+    print("checking")
+    UI.drawText(42, 37, "Checking Nodes", colors.yellow)
+    local message = "Are you running #"
+    for i = 1, totalTurtles, 1 do
+        modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,"Are you running #" .. tostring(i))
+
+        local channel, replyChannel, pack, distance = MineNet.timerListenOnChannel(RECEIVE_CHANNEL,.5)
+        if (pack == "Yes")then
+            print("heard")
+            UI.drawText(42, 37, "Nodes Found", colors.yellow)
+        else
+          print("nothing")
+        end
+      end
+      
+    UI.drawText(42, 37, "No Nodes", colors.yellow)
+    print("No logging turtles found")
 end
 
 function drawDemo()
