@@ -6,6 +6,10 @@ UI = {
 }
 BLOCK_DB = {}
 
+local MAX_X = 100
+local MAX_Y = 100
+local MAX_Z = 100
+
 function UI.init(monitor)
   UI.monitor = monitor
   UI.width, UI.height = monitor.getSize()
@@ -65,16 +69,17 @@ end
 
 --NEW
 function UI.initBlockDB() 
-  for layers = 1, 100 do
+  for layers = 1, MAX_Y do
     BLOCK_DB[layers] = {}
-    for col = 1, 55 do
+    for col = 1, MAX_X do
       BLOCK_DB[layers][col] = {}  -- or a default value like false or "empty"
-        for row = 1, 32 do
+        for row = 1, MAX_Z do
               BLOCK_DB[layers][col][row] = colors.gray
             end
         end
     end
 end
+
 --NEW
 --Note changeGridColor changes the database not the screen
 function UI.changeGridColor(col, row, layer, color)
@@ -83,11 +88,28 @@ function UI.changeGridColor(col, row, layer, color)
     end
 end
 --NEW
-function UI.CheckDB(layer)
+function UI.ResetTurtlePos()
+  for layer, cols in pairs(BLOCK_DB) do
+    for col, rows in pairs(cols) do
+        for row =1, #rows do
+            -- Example condition: check if the color is "yellow"
+            if rows[row] == colors.yellow then
+                BLOCK_DB[layer][col][row] = colors.black
+            end
+        end
+    end
+  end
+end
+--NEW
+function UI.CheckDB(layer,UI_X,UI_Y)
   selectedLayer = {}
-  UI.drawGrid(2, 2, 55, 32, 1, 1, function(col, row)
-    if BLOCK_DB[layer] and BLOCK_DB[layer][col] and BLOCK_DB[layer][col][row] then
-      selectedLayer = BLOCK_DB[layer][col][row] 
+  UI.drawGrid(2, 2, 55, 35, 1, 1, function(col, row)
+
+    local dbX = UI_X + col - 1
+    local dbZ = UI_Y + row - 1
+
+    if BLOCK_DB[layer] and BLOCK_DB[layer][dbX] and BLOCK_DB[layer][dbX][dbZ] then
+      selectedLayer = BLOCK_DB[layer][dbX][dbZ] 
     else 
       selectedLayer = colors.red -- only if empty for some reason
     end
@@ -96,6 +118,7 @@ function UI.CheckDB(layer)
 end
 --NEW
 function UI.SaveDB()
+  UI.ResetTurtlePos()
   file = fs.open("BLOCK_DB.txt", "w")
   file.write(textutils.serialize(BLOCK_DB))
   file.close()
@@ -112,7 +135,47 @@ function UI.GetSavedDB()
       print("No Saved DB available")
   end
 end
-
+--NEW
+function UI.getCurrentGridTurtles(pack)
+  if (type(pack) == "table")then
+    for key, value in pairs(pack) do
+      local X = value[1].x
+      local Z = value[1].z
+      local Y = value[1].y
+      UI.changeGridColor(X,Z,Y, colors.yellow)
+    end
+  else 
+    MineNet.logToFile(textutils.serialize({a={}}), 'nope')
+  end
+end
+--NEW
+function UI.getLastGridTurtles(pack)
+  MineNet.logToFile(textutils.serialize(pack), 'val')
+  
+  if (type(pack) == "table")then
+    for key, value in pairs(pack) do
+      MineNet.logToFile(textutils.serialize(value[1]), 'val2')
+      local X = value[1].x
+      local Z = value[1].z
+      local Y = value[1].y
+      UI.changeGridColor(X,Z,Y, colors.black)
+    end
+  else 
+    MineNet.logToFile(textutils.serialize({a={}}), 'nope2')
+  end
+end
+--NEW 
+function UI.drawBox(x, y, w, h, bgColor, label,monitor)
+    for dy = 0, h - 1 do
+      monitor.setCursorPos(x, y + dy)
+      monitor.setBackgroundColor(bgColor)
+      monitor.write((" "):rep(w))
+    end
+    -- Center the label
+    local labelX = x + math.floor((w - #label) / 2)
+    local labelY = y + math.floor(h / 2)
+    UI.drawText(labelX, labelY, label, textColor, bgColor)
+  end
 function UI.handleTouch(x, y)
   for _, el in ipairs(UI.elements) do
     if el.type == "button" then
