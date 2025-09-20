@@ -85,7 +85,7 @@ You can embed screenshots, gifs, or videos here to show setup and demos. Example
 
 For videos or GIFs, upload them to a host (e.g., GitHub repo, Imgur, or YouTube) and embed:
 
-[![MineNet Demo](https://drive.google.com/file/d/1KqF3ZjjfUeHFwHxlp8484CImFAK6jeFS/view)]
+[![MineNet Demo](https://drive.google.com/uc?export=view&id=1KqF3ZjjfUeHFwHxlp8484CImFAK6jeFS)]
 
 ---
 
