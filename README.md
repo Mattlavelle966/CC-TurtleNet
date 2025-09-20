@@ -80,11 +80,11 @@ MineNetUI/
 ##  Media
 
 You can embed screenshots, gifs, or videos here to show setup and demos. Example:
-![MineNet UI](./Media/MineNetUi.png)
+![MineNet UI](./Media/MineNetUi.PNG)
 ![MineNet UI Demo Video](./Media/MineNetUiDemo.mp4)
 
 For videos or GIFs, upload them to a host (e.g., GitHub repo, Imgur, or YouTube) and embed:
-![MineNet Server](./Media/ServerFlow.png)
+![MineNet Server](./Media/ServerFlow.PNG)
 ![MineNet Server Demo Video](./Media/NetFlow.mp4)
 
 ---
