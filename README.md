@@ -81,7 +81,7 @@ MineNetUI/
 
 You can embed screenshots, gifs, or videos here to show setup and demos. Example:
 
-![MineNet UI Screenshot](https://drive.google.com/file/d/1UjtXoJcfM3LO5f-3NnQEBxvZyWSLNmIe/view?usp=sharing)
+![MineNet UI Screenshot](https://drive.google.com/uc?export=view&id=1KqF3ZjjfUeHFwHxlp8484CImFAK6jeFS)
 
 For videos or GIFs, upload them to a host (e.g., GitHub repo, Imgur, or YouTube) and embed:
 
