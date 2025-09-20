@@ -81,11 +81,11 @@ MineNetUI/
 
 You can embed screenshots, gifs, or videos here to show setup and demos. Example:
 
-![MineNet UI Screenshot](https://drive.google.com/uc?export=view&id=1KqF3ZjjfUeHFwHxlp8484CImFAK6jeFS)
+![MineNet UI Screenshot](https://github.com/Mattlavelle966/CC-TurtleNet/blob/BETA-1.2.1/Media/MineNetUiDemo.mp4)
 
 For videos or GIFs, upload them to a host (e.g., GitHub repo, Imgur, or YouTube) and embed:
 
-[![MineNet Demo](https://drive.google.com/uc?export=view&id=1KqF3ZjjfUeHFwHxlp8484CImFAK6jeFS)]
+![MineNet Demo](https://github.com/Mattlavelle966/CC-TurtleNet/blob/BETA-1.2.1/Media/NetFlow.mp4)
 
 ---
 
