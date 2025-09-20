@@ -1,2 +1,2 @@
-Turtle Slaves = 15
+Turtle Nodes = 15
 Turtle Master = 43
