@@ -1,0 +1,8 @@
+{
+  Y = 1,
+  X = 22,
+  Z = 53,
+  Facing = 1,
+  isNew = false,
+  NetId = 3,
+}

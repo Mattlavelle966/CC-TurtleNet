@@ -3,20 +3,29 @@
 TMNL = {}
 -- max of 55=x and 32=z
 --starting coords, make dynamic in future
-TMNL.currentCoordinates = { x = 29, y = 1, z = 18 }
+--CONFIG
+TMNL.currentCoordinates = { x = 29, y = 1, z = 20 }
+
 
 TMNL.Packet = {}
+TMNL.Queue = {}
 TMNL.Facing = 0 -- e.g. relative to starting pos
 -- 0=north, 1=west, 2=south, 3=east
 -- or we return the movement and return it 
 -- reset Packet every day cycle
-
+function TMNL.TurtleInit()
+    for i = 1, 4, 1 do
+        turtle.turnLeft()
+    end
+end
 
 function TMNL.Forward()
     -- rather then a string movement could be a color object as the - 
     -- end result on the main server is a color database where different
-    -- colors, black is empty space and grey is unknown if   
-    hasMoved = turtle.forward()
+    -- colors, black is empty space and grey is unknown if
+    local returnData = {}
+    turtle.refuel(1)   
+    hasMoved,str = turtle.forward()
     if (hasMoved == true) then
         if TMNL.Facing == 0 then
             --coordinate { -1, 0, 0 }
@@ -28,25 +37,33 @@ function TMNL.Forward()
         elseif TMNL.Facing == 3 then
             TMNL.currentCoordinates.z = TMNL.currentCoordinates.z + 1
         end
-        packet = {
-            x = TMNL.currentCoordinates.x,
-            y = TMNL.currentCoordinates.y,
-            z = TMNL.currentCoordinates.z,
-            timestamp = os.date("!%c")
-            }
+
         --return TMNL.Packet for all changes ever
         table.insert(TMNL.Packet, {
             x = TMNL.currentCoordinates.x,
             y = TMNL.currentCoordinates.y,
             z = TMNL.currentCoordinates.z,
-            timestamp = os.date("!%c")
+            turtleId = os.computerID(),
+            timestamp = os.time("local")
             })
-        return packet
+        table.insert(TMNL.Queue, {
+        x = TMNL.currentCoordinates.x,
+        y = TMNL.currentCoordinates.y,
+        z = TMNL.currentCoordinates.z,
+        turtleId = os.computerID(),
+        timestamp = os.time("local")
+        })
+    else
+        print(tostring(hasMoved) .. str)        
     end
+    table.insert(returnData,{Result = hasMoved, event=str })
+    return returnData
 end
 
 function TMNL.Back()
-    hasMoved = turtle.back()
+    local returnData = {}
+    turtle.refuel(1)
+    hasMoved,str = turtle.back()
     if (hasMoved == true) then
        if TMNL.Facing == 0 then
             TMNL.currentCoordinates.x = TMNL.currentCoordinates.x + 1
@@ -57,45 +74,54 @@ function TMNL.Back()
         elseif TMNL.Facing == 3 then
             TMNL.currentCoordinates.z = TMNL.currentCoordinates.z - 1
         end
-        packet = {
-            x = TMNL.currentCoordinates.x,
-            y = TMNL.currentCoordinates.y,
-            z = TMNL.currentCoordinates.z,
-            timestamp = os.date("!%c")
-        }
         table.insert(TMNL.Packet, {
             x = TMNL.currentCoordinates.x,
             y = TMNL.currentCoordinates.y,
             z = TMNL.currentCoordinates.z,
-            timestamp = os.date("!%c")
+            turtleId = os.computerID(),
+            timestamp = os.time("local")
         })
-        return packet
+        table.insert(TMNL.Queue, {
+        x = TMNL.currentCoordinates.x,
+        y = TMNL.currentCoordinates.y,
+        z = TMNL.currentCoordinates.z,
+        turtleId = os.computerID(),
+        timestamp = os.time("local")
+        })
+        
+    else
+        print(tostring(hasMoved) .. str)        
     end
+    table.insert(returnData,{Result = hasMoved, event=str })
+    return returnData
 end
 
 function TMNL.Up()
     --needs layer system in addition
-    hasMoved = assert(turtle.up())
+    turtle.refuel(1)
+    hasMoved = turtle.up()
     if (hasMoved == true) then
         TMNL.currentCoordinates.y = TMNL.currentCoordinates.y + 1 
         table.insert(TMNL.Packet, {
             x = TMNL.currentCoordinates.x,
             y = TMNL.currentCoordinates.y,
             z = TMNL.currentCoordinates.z,
-            timestamp = os.date("!%c")
+            turtleId = os.computerID(),
+            timestamp = os.time("local")
         })
-        packet = {
-            x = TMNL.currentCoordinates.x,
-            y = TMNL.currentCoordinates.y,
-            z = TMNL.currentCoordinates.z,
-            timestamp = os.date("!%c")
-        }
-        return packet  
+        table.insert(TMNL.Queue, {
+        x = TMNL.currentCoordinates.x,
+        y = TMNL.currentCoordinates.y,
+        z = TMNL.currentCoordinates.z,
+        turtleId = os.computerID(),
+        timestamp = os.time("local")
+        })
     end
 end
 
 function TMNL.Down()
     --needs layer system in addition
+    turtle.refuel(1)
     hasMoved = turtle.down()
     if (hasMoved == true) then
        TMNL.currentCoordinates.y = TMNL.currentCoordinates.y - 1 
@@ -103,15 +129,16 @@ function TMNL.Down()
             x = TMNL.currentCoordinates.x,
             y = TMNL.currentCoordinates.y,
             z = TMNL.currentCoordinates.z,
-            timestamp = os.date("!%c")
+            turtleId = os.computerID(),
+            timestamp = os.time("local")
         })
-        packet = {
-            x = TMNL.currentCoordinates.x,
-            y = TMNL.currentCoordinates.y,
-            z = TMNL.currentCoordinates.z,
-            timestamp = os.date("!%c")
-        }
-        return packet  
+        table.insert(TMNL.Queue, {
+        x = TMNL.currentCoordinates.x,
+        y = TMNL.currentCoordinates.y,
+        z = TMNL.currentCoordinates.z,
+        turtleId = os.computerID(),
+        timestamp = os.time("local")
+        })
     end
 end
 
