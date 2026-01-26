@@ -1,131 +1,140 @@
-
-require "mine_net"
-require "mine_net_ui"
+require("mine_net")
+require("mine_net_ui")
 --MasterMineServer
 local RECEIVE_CHANNEL = 43
 local SENDING_CHANNEL = 15
 local MASTER_RECEIVE_CHANNEL = 73
 local MASTER_SENDING_CHANNEL = 32
-local totalTurtles = 5
+local totalTurtles = 3
 local buffer = {}
---read from file 
+--read from file
 local latestTimestamp = 0
 MineNetUI.initUI()
 local modem = peripheral.find("modem") or error("No modem attached", 0)
 
-
 function StreamLoop()
-    while true do
-            print("awaiting Turtles")
-            for i=1,totalTurtles,1 do
-                print("requesting turtle" .. i)
-                modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "send latest"..i)
-                local timer = os.startTimer(.5)
-                local gotResponse = false
-                repeat
-                    local e = { os.pullEvent() }
-                    if (e[1] == "modem_message" and e[3] == RECEIVE_CHANNEL) then
-                        message = e[5]
-                        packets = textutils.unserialize(message)
-                        MineNet.logToFile(packets,"packets")
-                        
-                        if packets then
-                            
-                            for j=1,#packets,1 do
-                                table.insert(buffer,packets[j])
-                            end
-                            
-                            gotResponse = true
-                            MineNetUI.statusBarSetter(colors.green, MineNetUI.statusBars[i].X, MineNetUI.statusBars[i].Y, MineNetUI.statusBars[i].width)
-                        else 
-                            print("packet null")
-                        end
-                    elseif (e[1] == "timer" and e[2] == timer) then
-                        print("timer triggered")
-                        MineNetUI.statusBarSetter(colors.red, MineNetUI.statusBars[i].X, MineNetUI.statusBars[i].Y, MineNetUI.statusBars[i].width)
+	while true do
+		print("awaiting Turtles")
+		for i = 1, totalTurtles, 1 do
+			print("requesting turtle" .. i)
+			modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "send latest" .. i)
+			local timer = os.startTimer(0.5)
+			local gotResponse = false
+			repeat
+				local e = { os.pullEvent() }
+				if e[1] == "modem_message" and e[3] == RECEIVE_CHANNEL then
+					message = e[5]
+					packets = textutils.unserialize(message)
+					MineNet.logToFile(packets, "packets")
 
-                        gotResponse = true
-                    else
-                        print("all failed")
-                    end
-                until gotResponse
-            end
-            MineNetUI.NodesBox(colors.green)
-            MineNetUI.drawProgressBar()
-            --should be 1D array of PACKS objects
-            print(textutils.serialize(buffer))
+					if packets then
+						for j = 1, #packets, 1 do
+							table.insert(buffer, packets[j])
+						end
 
-            table.sort(buffer, function(a, b)
-                return a.timestamp > b.timestamp
-            end)
-            MineNetUI.PackerCollBox(colors.green)
-            MineNetUI.drawProgressBar()
+						gotResponse = true
+						MineNetUI.statusBarSetter(
+							colors.green,
+							MineNetUI.statusBars[i].X,
+							MineNetUI.statusBars[i].Y,
+							MineNetUI.statusBars[i].width
+						)
+					else
+						print("packet null")
+					end
+				elseif e[1] == "timer" and e[2] == timer then
+					print("timer triggered")
+					MineNetUI.statusBarSetter(
+						colors.red,
+						MineNetUI.statusBars[i].X,
+						MineNetUI.statusBars[i].Y,
+						MineNetUI.statusBars[i].width
+					)
 
-            MineNet.logToFile(buffer,"buffer")
-            
-            MineNetUI.ManipBox(colors.green)
-            MineNetUI.drawProgressBar()
-            for i=1, #buffer,1 do
-                currentBuffer = buffer[i]
-                if (latestTimestamp <= currentBuffer.timestamp)then
-                    latestTimestamp = currentBuffer.timestamp
-                    print("Pushing latest to Masterdb")
-                    modem.open(MASTER_RECEIVE_CHANNEL)
-                    modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL,textutils.serialize(currentBuffer))
-                    channel, replyChannel, message, distance = MineNet.listenOnChannel(MASTER_RECEIVE_CHANNEL)
-                    
-                    if (message == 'worked') then
-                        print("Pushed to Masterdb")
-                        MineNetUI.StreamBox(colors.green)
-                        MineNetUI.drawProgressBar()
+					gotResponse = true
+				else
+					print("all failed")
+				end
+			until gotResponse
+		end
+		MineNetUI.NodesBox(colors.green)
+		MineNetUI.drawProgressBar()
+		--should be 1D array of PACKS objects
+		print(textutils.serialize(buffer))
 
-                    else
-                        print("message was invalid")
-                        break
-                    end
-                end
-            end
-            modem.open(RECEIVE_CHANNEL)
-            buffer = {}                
-        end
+		table.sort(buffer, function(a, b)
+			return a.timestamp > b.timestamp
+		end)
+		MineNetUI.PackerCollBox(colors.green)
+		MineNetUI.drawProgressBar()
+
+		MineNet.logToFile(buffer, "buffer")
+
+		MineNetUI.ManipBox(colors.green)
+		MineNetUI.drawProgressBar()
+		for i = 1, #buffer, 1 do
+			currentBuffer = buffer[i]
+			if latestTimestamp <= currentBuffer.timestamp then
+				latestTimestamp = currentBuffer.timestamp
+				print("Pushing latest to Masterdb")
+				modem.open(MASTER_RECEIVE_CHANNEL)
+				modem.transmit(MASTER_SENDING_CHANNEL, MASTER_RECEIVE_CHANNEL, textutils.serialize(currentBuffer))
+				channel, replyChannel, message, distance = MineNet.listenOnChannel(MASTER_RECEIVE_CHANNEL)
+
+				if message == "worked" then
+					print("Pushed to Masterdb")
+					MineNetUI.StreamBox(colors.green)
+					MineNetUI.drawProgressBar()
+				else
+					print("message was invalid")
+					break
+				end
+			end
+		end
+		modem.open(RECEIVE_CHANNEL)
+		buffer = {}
+	end
 end
 function getClicks()
-  while true do
-    local e, side, x, y = os.pullEvent("monitor_touch")
-    if side == monitorSide then
-      UI.handleTouch(x, y)
-    end
-  end
+	while true do
+		local e, side, x, y = os.pullEvent("monitor_touch")
+		if side == monitorSide then
+			UI.handleTouch(x, y)
+		end
+	end
 end
 function MainThreads()
-    parallel.waitForAny(StreamLoop,getClicks)
+	parallel.waitForAny(StreamLoop, getClicks)
 end
 function CheckIfStarted()
-    print("checking")
-    local message = "Are you running #"
-    for i = 1, totalTurtles, 1 do
-        MineNetUI.NodesBox(colors.yellow)
-        modem.transmit(SENDING_CHANNEL,RECEIVE_CHANNEL,"Are you running #" .. tostring(i))
-        MineNetUI.statusBarSetter(colors.yellow, MineNetUI.statusBars[i].X, MineNetUI.statusBars[i].Y, MineNetUI.statusBars[i].width)
+	print("checking")
+	local message = "Are you running #"
+	for i = 1, totalTurtles, 1 do
+		MineNetUI.NodesBox(colors.yellow)
+		modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "Are you running #" .. tostring(i))
+		MineNetUI.statusBarSetter(
+			colors.yellow,
+			MineNetUI.statusBars[i].X,
+			MineNetUI.statusBars[i].Y,
+			MineNetUI.statusBars[i].width
+		)
 
-        local channel, replyChannel, pack, distance = MineNet.timerListenOnChannel(RECEIVE_CHANNEL,.5)
-        if (pack == "Yes")then
-            print("heard")
-            MineNetUI.ClientBox(colors.green)
-            MainThreads()
-        else
-            MineNetUI.NodesBox(colors.lightGray)
-            print("nothing")
-        end
-    end
-    MineNetUI.ResetNodeStatusBars()
-    print("No logging turtles found")
-
+		local channel, replyChannel, pack, distance = MineNet.timerListenOnChannel(RECEIVE_CHANNEL, 0.5)
+		if pack == "Yes" then
+			print("heard")
+			MineNetUI.ClientBox(colors.green)
+			MainThreads()
+		else
+			MineNetUI.NodesBox(colors.lightGray)
+			print("nothing")
+		end
+	end
+	MineNetUI.ResetNodeStatusBars()
+	print("No logging turtles found")
 end
 
-
 -- Send our message
---temporary terminal till a startup file 
+--temporary terminal till a startup file
 modem.open(MASTER_RECEIVE_CHANNEL) -- Open 43 so we can receive replies
 CheckIfStarted()
 print("waiting for UI Master")
@@ -136,24 +145,22 @@ print("master heard")
 MineNetUI.ClientBox(colors.green)
 MineNetUI.drawProgressBar()
 
+modem.transmit(MASTER_SENDING_CHANNEL, MASTER_RECEIVE_CHANNEL, "starting slaves")
+if message == "start slaves" then
+	modem.open(RECEIVE_CHANNEL)
+	modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "hello")
+	print("transmitting on Channel: " .. SENDING_CHANNEL)
+	--ui
+	MineNetUI.NodesBox(colors.yellow)
+	-- And wait for a reply
+	channel, replyChannel, message, distance = MineNet.listenOnChannel(RECEIVE_CHANNEL)
+	if message == "ready" then
+		print("ready")
+		modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "begin mining")
+		MainThreads()
 
-
-modem.transmit(MASTER_SENDING_CHANNEL,MASTER_RECEIVE_CHANNEL,'starting slaves')
-if (message == 'start slaves') then 
-    modem.open(RECEIVE_CHANNEL)
-    modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "hello")
-    print("transmitting on Channel: " .. SENDING_CHANNEL)
-    --ui
-    MineNetUI.NodesBox(colors.yellow)
-    -- And wait for a reply
-    channel, replyChannel, message, distance = MineNet.listenOnChannel(RECEIVE_CHANNEL)
-    if (message == "ready") then
-        print("ready")
-        modem.transmit(SENDING_CHANNEL, RECEIVE_CHANNEL, "begin mining")
-        MainThreads()
-        
-        MineNet.loopUiInit()
-    else
-        print("ready not recieved")
-    end
+		MineNet.loopUiInit()
+	else
+		print("ready not recieved")
+	end
 end
