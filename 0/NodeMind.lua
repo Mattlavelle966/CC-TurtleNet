@@ -23,37 +23,25 @@ local STARTING_POS = Mind.STARTING_POS
 modem.open(RECEIVE_CHANNEL)
 TMNL.TurtleInit()
 
+local CMD_RECV_CHANNEL = 90
+local CMD_SEND_CHANNEL = 91
+
+Mind.initCmd(modem, CMD_RECV_CHANNEL, CMD_SEND_CHANNEL)
+
 function MovementLoop()
-	print("thread 1")
-
-	local s = Mind.STARTING_POS
-	print("YPOS:" .. tostring(s.y))
-	local testTarget = {
-		x = s.x + 10,
-		y = s.y - 10,
-		z = s.z + 10,
-	}
-
 	while true do
-		print("Going to test target")
-		if not Mind.goTo(testTarget) then
-			print("Blocked going to test target")
-			sleep(2)
+		if #Mind.cmdInbox > 0 then
+			Mind.handleCmdMessage(table.remove(Mind.cmdInbox, 1))
 		end
 
-		print("Returning home")
-		if not Mind.goTo(Mind.home) then
-			print("Blocked returning home")
-			sleep(2)
-		end
+		Mind.stepToTarget()
 
-		Mind.turnTo(Mind.home.facing)
-		sleep(3)
+		sleep(0.05)
 	end
 end
 
 function ListenLoop()
-	--print("thread 2")
+	print("thread 2")
 	while true do
 		local e = { os.pullEvent() }
 		if e[1] == "modem_message" and e[3] == RECEIVE_CHANNEL then
@@ -74,6 +62,22 @@ function ListenLoop()
 			else
 				--print("wrong pack")
 			end
+		-- 2) command channel (NEW: do not handle here, just forward to MovementLoop)
+		elseif e[1] == "modem_message" and e[3] == CMD_RECV_CHANNEL then
+			print("tablet is working")
+			table.insert(Mind.cmdInbox, e[5])
+
+			-- optional immediate ack (so your test script sees *something*)
+			modem.transmit(
+				CMD_SEND_CHANNEL,
+				CMD_RECV_CHANNEL,
+				textutils.serialize({
+					cmd = "rx",
+					id = TMNL.NodeId,
+					state = Mind.state,
+					pos = TMNL.currentCoordinates,
+				})
+			)
 		end
 	end
 end
