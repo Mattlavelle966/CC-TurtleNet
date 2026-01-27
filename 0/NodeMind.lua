@@ -65,7 +65,15 @@ function ListenLoop()
 		-- 2) command channel (NEW: do not handle here, just forward to MovementLoop)
 		elseif e[1] == "modem_message" and e[3] == CMD_RECV_CHANNEL then
 			print("tablet is working")
-			table.insert(Mind.cmdInbox, e[5])
+			local msg = e[5]
+
+			-- expect: "id:<n> <command...>"
+			if type(msg) == "string" then
+				local idStr, cmd = msg:match("^id:(%d+)%s+(.+)$")
+				if idStr and tonumber(idStr) == TMNL.NodeId then
+					table.insert(Mind.cmdInbox, cmd)
+				end
+			end
 
 			-- optional immediate ack (so your test script sees *something*)
 			modem.transmit(
