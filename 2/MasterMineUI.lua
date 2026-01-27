@@ -29,6 +29,11 @@ local buttonBarYPos = 38
 local UI_X = 1
 local UI_Y = 1
 
+--broadcasting db
+local DB_BROADCAST_CHANNEL = 92
+local DB_BROADCAST_INTERVAL = 1.0 -- seconds
+local lastBroadcast = 0
+
 UI.initBlockDB()
 UI.init(monitor)
 
@@ -61,6 +66,22 @@ function packetCollector()
 				.. "  ",
 			colors.white
 		)
+		if os.clock() - lastBroadcast >= DB_BROADCAST_INTERVAL then
+			lastBroadcast = os.clock()
+
+			-- Broadcast the full Block DB to any listeners (tablet / hive mind)
+			-- NOTE: This can be very large depending on DB size.
+			modem.transmit(
+				DB_BROADCAST_CHANNEL,
+				0,
+				textutils.serialize({
+					cmd = "db_broadcast",
+					ts = os.epoch("utc"),
+					db = BLOCK_DB, -- FULL DB PAYLOAD
+				})
+			)
+		end
+
 		local e = { os.pullEvent() }
 		if e[1] == "modem_message" and e[3] == MASTER_RECEIVE_CHANNEL then
 			MineNet.logToFile(textutils.serialize(e), "e")

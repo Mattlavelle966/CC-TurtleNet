@@ -1,8 +1,8 @@
 {
-  Y = 90,
-  X = 51,
-  Z = 50,
-  Facing = 1,
+  Y = 55,
+  X = 3,
+  Z = 55,
+  Facing = 0,
   isNew = false,
   NetId = 1,
 }
