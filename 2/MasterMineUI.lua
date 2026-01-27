@@ -125,7 +125,7 @@ function packetCollector()
 						UI.getCurrentGridTurtles(turtleCurrentPositions)
 						UI.getLastGridTurtles(lastTurtlePosition)
 					end
-					currentLayer = y
+					--currentLayer = y
 					print("getting latest")
 					UI.CheckDB(currentLayer, UI_X, UI_Y)
 					print("DB loaded")
