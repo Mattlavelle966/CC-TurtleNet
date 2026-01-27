@@ -1,8 +1,8 @@
 {
   Y = 1,
-  X = 11,
-  Z = 3,
-  Facing = 0,
+  X = 1,
+  Z = 1,
+  Facing = 3,
   isNew = false,
   NetId = 1,
 }

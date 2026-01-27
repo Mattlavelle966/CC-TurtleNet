@@ -1,4 +1,4 @@
--- cmd_test.lua (tablet-friendly + DB broadcast handling + stable UI)
+-- cmd_test.lua (tablet-friendly + DB broadcast handling + stable UI + ID-targeted commands)
 local CMD_RECV_CHANNEL = 90
 local CMD_SEND_CHANNEL = 91
 local DB_BROADCAST_CHANNEL = 92
@@ -14,10 +14,10 @@ modem.open(DB_BROADCAST_CHANNEL)
 local W, H = term.getSize()
 
 -- --- state ---
-local lastDbMsgAt = nil -- os.clock() timestamp
-local lastDbPayload = nil -- table
-local lastDbRawLen = 0 -- length of raw message
-local lastDbArrivedAt = nil -- for interval estimate
+local lastDbMsgAt = nil
+local lastDbPayload = nil
+local lastDbRawLen = 0
+local lastDbArrivedAt = nil
 local dbIntervalEstimate = nil
 
 local dbPanelEnabled = false
@@ -26,18 +26,11 @@ local menuEnabled = true
 local logLines = {}
 local LOG_MAX = math.max(5, H - 14)
 
+-- NEW: target turtle id
+local TARGET_ID = 1
+
 local function now()
 	return os.clock()
-end
-
-local function clamp(n, lo, hi)
-	if n < lo then
-		return lo
-	end
-	if n > hi then
-		return hi
-	end
-	return n
 end
 
 local function log(s)
@@ -48,18 +41,13 @@ local function log(s)
 	end
 end
 
--- quick DB inspection without iterating 1,000,000 cells
 local function dbQuickStats(db)
 	if type(db) ~= "table" then
 		return { ok = false, reason = "db not a table" }
 	end
 
-	-- Your UI DB is indexed as: BLOCK_DB[layer][x][z]
-	-- We can cheaply estimate sizes by scanning existing keys (not full deep scan).
 	local layerCount = 0
 	local minLayer, maxLayer = nil, nil
-
-	-- gather some sample layer keys
 	for k, _ in pairs(db) do
 		if type(k) == "number" then
 			layerCount = layerCount + 1
@@ -72,7 +60,6 @@ local function dbQuickStats(db)
 		end
 	end
 
-	-- sample one layer to estimate X and Z extents
 	local sampleLayer = nil
 	if minLayer and db[minLayer] then
 		sampleLayer = db[minLayer]
@@ -96,7 +83,6 @@ local function dbQuickStats(db)
 			end
 		end
 
-		-- sample one X column for Z extents
 		local sampleCol = nil
 		if minX and sampleLayer[minX] then
 			sampleCol = sampleLayer[minX]
@@ -163,7 +149,7 @@ local function drawHeader()
 	term.setTextColor(colors.white)
 	term.clearLine()
 
-	term.write("cmd_test | ")
+	term.write(("cmd_test | target id:%d | "):format(TARGET_ID))
 	drawDbLight()
 end
 
@@ -173,6 +159,7 @@ local function drawMenu()
 	term.setBackgroundColor(colors.black)
 
 	print("Select command:")
+	print("T) set target turtle id")
 	print("1) status")
 	print("2) goto")
 	print("3) home")
@@ -191,13 +178,11 @@ local function drawDbPanel()
 		return
 	end
 
-	-- Compact right-side panel that DOES NOT clear whole lines
 	local panelW = math.min(24, math.max(12, math.floor(W * 0.35)))
 	local panelH = 7
 	local panelX = W - panelW + 1
-	local panelY = 2 -- below header
+	local panelY = 2
 
-	-- if terminal too narrow, just don't draw it
 	if panelW < 12 or panelX < 1 then
 		return
 	end
@@ -221,7 +206,6 @@ local function drawDbPanel()
 		term.write(s .. (" "):rep((panelW - 2) - #s))
 	end
 
-	-- background only inside the panel width
 	for i = 0, panelH - 1 do
 		fillLine(panelY + i, colors.gray)
 	end
@@ -248,7 +232,6 @@ local function drawDbPanel()
 		writeAt(6, "")
 	end
 
-	-- restore default colors
 	term.setBackgroundColor(colors.black)
 	term.setTextColor(colors.white)
 end
@@ -273,7 +256,6 @@ local function render(input)
 	drawDbPanel()
 	drawLog()
 
-	-- input line at bottom
 	term.setCursorPos(1, H)
 	term.setBackgroundColor(colors.black)
 	term.setTextColor(colors.white)
@@ -281,12 +263,15 @@ local function render(input)
 	term.write("> " .. (input or ""))
 end
 
+-- NEW: id-prefixed send helper
 local function sendCmd(msg)
-	modem.transmit(CMD_RECV_CHANNEL, CMD_SEND_CHANNEL, msg)
+	msg = tostring(msg)
+	local out = ("id:%d %s"):format(TARGET_ID, msg)
+	modem.transmit(CMD_RECV_CHANNEL, CMD_SEND_CHANNEL, out)
 end
 
--- input state machine (goto coords)
-local mode = "menu" -- menu | goto_x | goto_y | goto_z
+-- input state machine
+local mode = "menu" -- menu | set_id | goto_x | goto_y | goto_z
 local tmpX, tmpY = nil, nil
 local input = ""
 
@@ -294,7 +279,6 @@ local function promptLine(label)
 	log(label)
 end
 
--- initial draw
 render(input)
 promptLine("ready")
 
@@ -303,7 +287,6 @@ local refreshTimer = os.startTimer(0.25)
 while true do
 	local e = { os.pullEvent() }
 
-	-- DB broadcast
 	if e[1] == "modem_message" and e[3] == DB_BROADCAST_CHANNEL then
 		local raw = e[5]
 		lastDbRawLen = type(raw) == "string" and #raw or 0
@@ -324,25 +307,18 @@ while true do
 			end
 			lastDbArrivedAt = tnow
 			lastDbMsgAt = tnow
-			-- keep UI stable: do NOT log the entire payload
 			log(("DB rx: ts=%s bytes=%d"):format(tostring(payload.ts), lastDbRawLen))
 		else
 			log("DB rx: unserialize failed or invalid payload")
 		end
 
 		render(input)
-
-	-- command replies
 	elseif e[1] == "modem_message" and e[3] == CMD_SEND_CHANNEL then
 		log("REPLY: " .. tostring(e[5]))
 		render(input)
-
-	-- periodic UI refresh so menu doesn't “go away”
 	elseif e[1] == "timer" and e[2] == refreshTimer then
 		refreshTimer = os.startTimer(0.25)
 		render(input)
-
-	-- typing
 	elseif e[1] == "char" then
 		input = input .. e[2]
 		render(input)
@@ -357,8 +333,17 @@ while true do
 			input = ""
 			render(input)
 
-			-- multi-step goto
-			if mode == "goto_x" then
+			if mode == "set_id" then
+				local n = tonumber(entered)
+				if n and n >= 1 then
+					TARGET_ID = math.floor(n)
+					log("target id set to " .. TARGET_ID)
+				else
+					log("invalid id")
+				end
+				mode = "menu"
+				render(input)
+			elseif mode == "goto_x" then
 				tmpX = tonumber(entered)
 				mode = "goto_y"
 				promptLine("y:")
@@ -372,7 +357,7 @@ while true do
 				local z = tonumber(entered)
 				if tmpX and tmpY and z then
 					sendCmd(("goto %d %d %d"):format(tmpX, tmpY, z))
-					log(("sent goto %d %d %d"):format(tmpX, tmpY, z))
+					log(("sent id:%d goto %d %d %d"):format(TARGET_ID, tmpX, tmpY, z))
 				else
 					log("invalid coords")
 				end
@@ -380,10 +365,12 @@ while true do
 				mode = "menu"
 				render(input)
 			else
-				-- menu mode
 				local choice = (entered or ""):match("^%s*(.-)%s*$")
 
-				if choice == "1" then
+				if choice == "T" or choice == "t" then
+					mode = "set_id"
+					promptLine("target id:")
+				elseif choice == "1" then
 					sendCmd("status")
 					log("sent status")
 				elseif choice == "2" then
@@ -433,7 +420,6 @@ while true do
 					logLines = {}
 					log("log cleared")
 				elseif choice == "9" then
-					-- force redraw of menu/log
 					log("redraw")
 				elseif choice == "0" then
 					term.setBackgroundColor(colors.black)

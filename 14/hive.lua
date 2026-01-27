@@ -3,7 +3,7 @@
 -- Requires turtle-side filtering (see patch below).
 
 -- ===== CONFIG =====
-local TOTAL_TURTLES = 5
+local TOTAL_TURTLES = 4
 
 local DB_BROADCAST_CHANNEL = 92
 local CMD_RECV_CHANNEL = 90

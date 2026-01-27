@@ -5,7 +5,7 @@ local RECEIVE_CHANNEL = 43
 local SENDING_CHANNEL = 15
 local MASTER_RECEIVE_CHANNEL = 73
 local MASTER_SENDING_CHANNEL = 32
-local totalTurtles = 3
+local totalTurtles = 4
 local buffer = {}
 --read from file
 local latestTimestamp = 0

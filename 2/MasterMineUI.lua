@@ -20,7 +20,7 @@ local colorIndex = 1
 local toggleChecker = false
 local LatestTimestamp = false
 --totalturtles is also the length of turtleCurrentPositions but saving that must be added
-local totalTurtles = 3
+local totalTurtles = 4
 local turtleCurrentPositions = {}
 local lastTurtlePosition = {}
 local found = false
@@ -66,21 +66,21 @@ function packetCollector()
 				.. "  ",
 			colors.white
 		)
-		if os.clock() - lastBroadcast >= DB_BROADCAST_INTERVAL then
-			lastBroadcast = os.clock()
-
-			-- Broadcast the full Block DB to any listeners (tablet / hive mind)
-			-- NOTE: This can be very large depending on DB size.
-			modem.transmit(
-				DB_BROADCAST_CHANNEL,
-				0,
-				textutils.serialize({
-					cmd = "db_broadcast",
-					ts = os.epoch("utc"),
-					db = BLOCK_DB, -- FULL DB PAYLOAD
-				})
-			)
-		end
+		-- if os.clock() - lastBroadcast >= DB_BROADCAST_INTERVAL then
+		-- 	lastBroadcast = os.clock()
+		--
+		-- 	-- Broadcast the full Block DB to any listeners (tablet / hive mind)
+		-- 	-- NOTE: This can be very large depending on DB size.
+		-- 	modem.transmit(
+		-- 		DB_BROADCAST_CHANNEL,
+		-- 		0,
+		-- 		textutils.serialize({
+		-- 			cmd = "db_broadcast",
+		-- 			ts = os.epoch("utc"),
+		-- 			db = BLOCK_DB, -- FULL DB PAYLOAD
+		-- 		})
+		-- 	)
+		-- end
 
 		local e = { os.pullEvent() }
 		if e[1] == "modem_message" and e[3] == MASTER_RECEIVE_CHANNEL then
