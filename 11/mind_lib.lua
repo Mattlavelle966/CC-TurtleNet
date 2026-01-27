@@ -41,7 +41,7 @@ function Mind.init(TMNL, opts)
 	Mind.seen = {}
 	Mind.mined = {}
 
-	Mind.flags = { returningHome = false, dumping = false, paused = false }
+	Mind.flags = { returningHome = false, dumping = false, paused = false, abort = false, wantHome = false }
 end
 
 function Mind._hasMethod(side, method)
@@ -69,11 +69,13 @@ function Mind.isInventory(side)
 
 	local name = data.name
 
-	-- turtles (THIS is the missing part)
-	if name == "computercraft:turtle" then
+	-- turtles (BLOCK THESE: never dig them)
+	if data.tags and data.tags["computercraft:turtle"] then
 		return true
 	end
-	if name == "computercraft:advanced_turtle" then
+
+	-- fallback: name variants across CC versions/mods
+	if name:find("turtle") and name:find("computercraft") then
 		return true
 	end
 
@@ -97,21 +99,45 @@ function Mind.isInventory(side)
 	return false
 end
 
+function Mind._clearFront(maxTries)
+	maxTries = maxTries or 6
+	for i = 1, maxTries do
+		if not turtle.detect() then
+			return true
+		end
+
+		if Mind.isInventory("front") then
+			return false -- turtle/chest/etc: do not dig
+		end
+
+		turtle.dig()
+		sleep(0) -- yield so falling blocks update + let other thread run
+	end
+	return not turtle.detect()
+end
+
 function Mind.safeForward()
 	local sx = TMNL.currentCoordinates.x
 	local sz = TMNL.currentCoordinates.z
 
 	if turtle.detect() then
-		if Mind.isInventory("front") then
-			print("IM BLOCKED: inventory/turtle detected, returning home")
-			Mind.turnTo((TMNL.Facing + 2) % 4)
-			Mind.goTo(Mind.home)
+		if not Mind._clearFront(8) then
+			print("IM BLOCKED: turtle/inventory detected")
+			Mind.flags.abort = true
+			Mind.flags.wantHome = true
 			return false
 		end
-		turtle.dig()
 	end
 
 	TMNL.Forward()
+
+	if TMNL.currentCoordinates.x == sx and TMNL.currentCoordinates.z == sz then
+		-- still didn't move; one more quick clear attempt (sand/gravel timing)
+		if turtle.detect() then
+			Mind._clearFront(3)
+			TMNL.Forward()
+		end
+	end
 
 	if TMNL.currentCoordinates.x == sx and TMNL.currentCoordinates.z == sz then
 		return false
@@ -178,36 +204,52 @@ end
 --Mind.goTo({ x=10, y=5, z=20 })
 function Mind.goTo(target)
 	while Mind.pos.y < target.y do
+		if Mind.flags and Mind.flags.abort then
+			return false
+		end
+		sleep(0)
 		if not Mind.safeUp() then
 			return false
 		end
 	end
 
 	while Mind.pos.y > target.y do
+		if Mind.flags and Mind.flags.abort then
+			return false
+		end
+		sleep(0)
 		if not Mind.safeDown() then
 			return false
 		end
 	end
 
 	while Mind.pos.x ~= target.x do
+		if Mind.flags and Mind.flags.abort then
+			return false
+		end
+		sleep(0)
+
 		if target.x < Mind.pos.x then
 			Mind.turnTo(0)
 		else
 			Mind.turnTo(2)
 		end
-
 		if not Mind.safeForward() then
 			return false
 		end
 	end
 
 	while Mind.pos.z ~= target.z do
+		if Mind.flags and Mind.flags.abort then
+			return false
+		end
+		sleep(0)
+
 		if target.z < Mind.pos.z then
 			Mind.turnTo(1)
 		else
 			Mind.turnTo(3)
 		end
-
 		if not Mind.safeForward() then
 			return false
 		end
@@ -345,10 +387,10 @@ function Mind._ensureFuelForReturn()
 
 	-- still low: go home and pause (operator can supply fuel)
 	Mind._cmdTx(Mind._stateObj({ note = "low_fuel_returning_home" }))
-	Mind.state = "Returning"
-	Mind.goTo(Mind.home)
-	Mind.turnTo(Mind.home.facing)
+	Mind.flags.abort = true
+	Mind.flags.wantHome = true
 	Mind.state = "Paused"
+
 	Mind._cmdTx(Mind._stateObj({ note = "paused_low_fuel" }))
 	return false
 end
@@ -632,195 +674,180 @@ end
 -- -------------------------
 function Mind.handleCmdMessage(msg)
 	local t = nil
+	local cmd = nil
+
+	-- Normalize incoming message into cmd + optional table t
 	if type(msg) == "string" then
-		t = textutils.unserialize(msg)
+		local ut = textutils.unserialize(msg)
+		if type(ut) == "table" then
+			t = ut
+			cmd = t.cmd
+		else
+			cmd = msg:match("^%s*(.-)%s*$") -- trimmed raw command text
+		end
+	elseif type(msg) == "table" then
+		t = msg
+		cmd = t.cmd
 	end
 
-	-- --------
-	-- STRING API
-	-- --------
-	if type(t) ~= "table" then
-		local s = tostring(msg)
-
-		if s == "status" then
-			Mind._cmdTx(Mind._stateObj())
-			return
-		end
-
-		if s == "pause" then
-			if Mind.state ~= "Dead" then
-				Mind.state = "Paused"
-				Mind._cmdTx(Mind._stateObj({ note = "paused" }))
-			end
-			return
-		end
-
-		if s == "resume" then
-			if Mind.state == "Paused" then
-				-- if we were returning, treat as awaiting
-				if Mind.job then
-					Mind.state = "Working"
-				else
-					Mind.state = "Awaiting"
-				end
-				Mind._cmdTx(Mind._stateObj({ note = "resumed" }))
-			end
-			return
-		end
-
-		if s == "home" then
-			-- interrupt any job and return home
-			Mind.job = nil
-			Mind.target = nil
-			Mind.state = "Returning"
-			Mind._cmdTx(Mind._stateObj({ note = "returning_home" }))
-			Mind.goTo(Mind.home)
-			Mind.turnTo(Mind.home.facing)
-			Mind.state = "Awaiting"
-			Mind._cmdTx(Mind._stateObj({ note = "at_home" }))
-			return
-		end
-
-		-- legacy "stop" = cancel job and Awaiting
-		if s == "stop" then
-			Mind.state = "Awaiting"
-			Mind.job = nil
-			Mind.target = nil
-			Mind.failCount = 0
-			Mind._cmdTx(Mind._stateObj({ note = "stopped" }))
-			return
-		end
-
-		-- legacy "reset" = clear dead/paused
-		if s == "reset" then
-			Mind.state = "Awaiting"
-			Mind.job = nil
-			Mind.target = nil
-			Mind.failCount = 0
-			Mind._cmdTx(Mind._stateObj({ note = "reset" }))
-			return
-		end
-
-		-- startlevel <y>
-		local a, y = s:match("^(startlevel)%s+(-?%d+)$")
-		if a == "startlevel" then
-			if Mind.state == "Dead" then
-				Mind._cmdTx(Mind._stateObj({ note = "refused_dead" }))
-				return
-			end
-			Mind._startLevelJob(tonumber(y))
-			return
-		end
-
-		-- legacy goto x y z
-		local g, gx, gy, gz = s:match("^(goto)%s+(-?%d+)%s+(-?%d+)%s+(-?%d+)$")
-		if g == "goto" then
-			Mind._acceptTarget({ x = tonumber(gx), y = tonumber(gy), z = tonumber(gz) })
-			return
-		end
-
+	if type(cmd) ~= "string" then
 		return
 	end
 
-	-- --------
-	-- TABLE API (optional, supports your UI sending objects)
-	-- --------
-	if t.cmd == "status" then
-		Mind._cmdTx(Mind._stateObj())
+	-- ===== UI COMMANDS (DO NOT CHANGE UI) =====
+
+	if cmd == "status" then
+		Mind._cmdTx(Mind._stateObj({ note = "status" }))
 		return
 	end
 
-	if t.cmd == "pause" then
-		if Mind.state ~= "Dead" then
-			Mind.state = "Paused"
-			Mind._cmdTx(Mind._stateObj({ note = "paused" }))
-		end
+	if cmd == "pause" then
+		Mind.state = "Paused"
+		Mind.flags.paused = true
+		Mind._cmdTx(Mind._stateObj({ note = "paused" }))
 		return
 	end
 
-	if t.cmd == "resume" then
+	if cmd == "resume" then
+		Mind.flags.paused = false
 		if Mind.state == "Paused" then
-			if Mind.job then
-				Mind.state = "Working"
-			else
-				Mind.state = "Awaiting"
-			end
-			Mind._cmdTx(Mind._stateObj({ note = "resumed" }))
+			Mind.state = "Awaiting"
 		end
+		Mind._cmdTx(Mind._stateObj({ note = "resumed" }))
 		return
 	end
 
-	if t.cmd == "home" then
-		Mind.job = nil
-		Mind.target = nil
-		Mind.state = "Returning"
+	-- IMPORTANT: do NOT call goTo() inside command handler anymore
+	if cmd == "home" then
+		Mind.flags.abort = true
+		Mind.flags.wantHome = true
 		Mind._cmdTx(Mind._stateObj({ note = "returning_home" }))
-		Mind.goTo(Mind.home)
-		Mind.turnTo(Mind.home.facing)
-		Mind.state = "Awaiting"
-		Mind._cmdTx(Mind._stateObj({ note = "at_home" }))
 		return
 	end
 
-	if t.cmd == "startlevel" then
-		if Mind.state == "Dead" and not t.force then
-			Mind._cmdTx(Mind._stateObj({ note = "refused_dead" }))
-			return
-		end
-		Mind._startLevelJob(tonumber(t.y))
+	if cmd == "stop" then
+		Mind.flags.abort = true
+		Mind.flags.wantHome = false
+		Mind._cmdTx(Mind._stateObj({ note = "stopping" }))
 		return
 	end
 
-	if t.cmd == "goto" then
-		Mind._acceptTarget({ x = tonumber(t.x), y = tonumber(t.y), z = tonumber(t.z), facing = t.facing })
+	-- keep your existing goto/startlevel parsing below (examples):
+	-- goto x y z
+	local gx, gy, gz = cmd:match("^goto%s+(-?%d+)%s+(-?%d+)%s+(-?%d+)%s*$")
+	if gx then
+		Mind.job = { type = "goto", target = { x = tonumber(gx), y = tonumber(gy), z = tonumber(gz) } }
+		Mind.state = "Working"
+		Mind._cmdTx(Mind._stateObj({ note = "goto_set", x = tonumber(gx), y = tonumber(gy), z = tonumber(gz) }))
 		return
 	end
 
-	if t.cmd == "stop" then
-		Mind.state = "Awaiting"
-		Mind.job = nil
-		Mind.target = nil
-		Mind.failCount = 0
-		Mind._cmdTx(Mind._stateObj({ note = "stopped" }))
+	-- startlevel y
+	local ly = cmd:match("^startlevel%s+(-?%d+)%s*$")
+	if ly then
+		Mind.job = { type = "level", y = tonumber(ly) }
+		Mind.state = "Working"
+		Mind._cmdTx(Mind._stateObj({ note = "level_set", y = tonumber(ly) }))
 		return
 	end
 
-	if t.cmd == "reset" then
-		Mind.state = "Awaiting"
-		Mind.job = nil
-		Mind.target = nil
-		Mind.failCount = 0
-		Mind._cmdTx(Mind._stateObj({ note = "reset" }))
-		return
-	end
+	-- if you have other commands (reset, etc.) keep them here...
 end
 
 -- -------------------------
 -- MAIN TICK (MovementLoop calls this name)
 -- -------------------------
 function Mind.stepToTarget()
-	-- single “brain tick” called repeatedly by MovementLoop :contentReference[oaicite:5]{index=5}
+	-- ===============================
+	-- HARD STATES
+	-- ===============================
 	if Mind.state == "Dead" then
 		return
 	end
 
-	-- if no job, just idle
+	if Mind.flags and Mind.flags.paused then
+		return
+	end
+
+	-- ===============================
+	-- ASYNC INTERRUPT FROM UI
+	-- ===============================
+	if Mind.flags and Mind.flags.abort then
+		Mind.flags.abort = false
+
+		-- UI said "home"
+		if Mind.flags.wantHome then
+			Mind.flags.wantHome = false
+
+			Mind.job = nil
+			Mind.target = nil
+			Mind.failCount = 0
+			Mind.state = "Returning"
+
+			local ok = Mind.goTo(Mind.home)
+			if ok then
+				if Mind.home.facing ~= nil then
+					Mind.turnTo(Mind.home.facing)
+				end
+				Mind.state = "Awaiting"
+				Mind._cmdTx(Mind._stateObj({ note = "at_home" }))
+			else
+				Mind.state = "Paused"
+				Mind._cmdTx(Mind._stateObj({ note = "blocked_returning_home" }))
+			end
+			return
+		end
+
+		-- UI said "stop"
+		Mind.job = nil
+		Mind.target = nil
+		Mind.failCount = 0
+		Mind.state = "Awaiting"
+		Mind._cmdTx(Mind._stateObj({ note = "stopped" }))
+		return
+	end
+
+	-- ===============================
+	-- NO JOB
+	-- ===============================
 	if not Mind.job then
-		if Mind.state ~= "Awaiting" and Mind.state ~= "Paused" then
+		Mind.state = "Awaiting"
+		return
+	end
+
+	-- ===============================
+	-- JOB: GOTO
+	-- ===============================
+	if Mind.job.type == "goto" then
+		Mind.state = "Working"
+
+		local ok = Mind.goTo(Mind.job.target)
+		if ok then
+			Mind.job = nil
 			Mind.state = "Awaiting"
+			Mind._cmdTx(Mind._stateObj({ note = "goto_complete" }))
+		else
+			Mind.failCount = (Mind.failCount or 0) + 1
+			if Mind.failCount >= (Mind.failLimit or 5) then
+				Mind.state = "Paused"
+				Mind._cmdTx(Mind._stateObj({ note = "goto_failed" }))
+			end
 		end
 		return
 	end
 
-	-- route to job type
+	-- ===============================
+	-- JOB: LEVEL MINING
+	-- ===============================
 	if Mind.job.type == "level" then
-		Mind._tickLevelJob()
-	elseif Mind.job.type == "goto" then
-		Mind._tickGotoJob()
-	else
-		-- unknown job type: fail safe
-		Mind._cmdTx(Mind._stateObj({ note = "unknown_job_cleared" }))
-		Mind.job = nil
-		Mind.state = "Awaiting"
+		Mind.state = "Working"
+
+		local done = Mind._tickLevelJob()
+		if done then
+			Mind.job = nil
+			Mind.state = "Awaiting"
+			Mind._cmdTx(Mind._stateObj({ note = "level_complete", y = Mind.job.y }))
+		end
+		return
 	end
 end

@@ -1,0 +1,13 @@
+{
+  state = {
+    facing = "east",
+    waterlogged = false,
+  },
+  mapColour = 16445005,
+  name = "computercraft:turtle_advanced",
+  mapColor = 16445005,
+  tags = {
+    [ "minecraft:mineable/pickaxe" ] = true,
+    [ "computercraft:turtle" ] = true,
+  },
+}

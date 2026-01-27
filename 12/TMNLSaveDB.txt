@@ -1,7 +1,7 @@
 {
-  Y = 1,
-  X = 6,
-  Z = 16,
+  Y = 100,
+  X = 26,
+  Z = 24,
   Facing = 3,
   isNew = false,
   NetId = 4,

@@ -1,6 +1,6 @@
 {
-  Y = 1,
-  X = 1,
+  Y = 100,
+  X = 5,
   Z = 1,
   Facing = 3,
   isNew = false,
