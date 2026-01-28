@@ -203,6 +203,11 @@ end
 
 --Mind.goTo({ x=10, y=5, z=20 })
 function Mind.goTo(target)
+
+  if type(target) ~= "table" or target.x == nil or target.y == nil or target.z == nil then
+    error("Mind.goTo: invalid target " .. textutils.serialize(target))
+  end
+
 	while Mind.pos.y < target.y do
 		if Mind.flags and Mind.flags.abort then
 			return false
@@ -745,9 +750,7 @@ function Mind.handleCmdMessage(msg)
 	-- startlevel y
 	local ly = cmd:match("^startlevel%s+(-?%d+)%s*$")
 	if ly then
-		Mind.job = { type = "level", y = tonumber(ly) }
-		Mind.state = "Working"
-		Mind._cmdTx(Mind._stateObj({ note = "level_set", y = tonumber(ly) }))
+		Mind._startLevelJob(tonumber(ly))
 		return
 	end
 
