@@ -2,7 +2,7 @@
   Y = 100,
   X = 98,
   Z = 1,
-  Facing = 0,
+  Facing = 2,
   isNew = false,
   NetId = 1,
 }

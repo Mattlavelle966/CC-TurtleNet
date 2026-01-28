@@ -94,8 +94,8 @@ function StreamLoop()
 					MineNetUI.StreamBox(colors.green)
 					MineNetUI.drawProgressBar()
 				else
-					print("message was invalid")
-					break
+					print("UI ack missing (worked). Will retry next cycle.")
+					
 				end
 			end
 		end
