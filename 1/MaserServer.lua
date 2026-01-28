@@ -11,6 +11,8 @@ local buffer = {}
 local latestTimestamp = 0
 MineNetUI.initUI()
 local modem = peripheral.find("modem") or error("No modem attached", 0)
+local turtles_latency_log = {}
+local turtle_latency_quote = 1000 --node gets kiked off after this many tries
 
 function StreamLoop()
 	while true do
@@ -31,7 +33,6 @@ function StreamLoop()
 						for j = 1, #packets, 1 do
 							table.insert(buffer, packets[j])
 						end
-
 						gotResponse = true
 						MineNetUI.statusBarSetter(
 							colors.green,
@@ -39,18 +40,25 @@ function StreamLoop()
 							MineNetUI.statusBars[i].Y,
 							MineNetUI.statusBars[i].width
 						)
+						turtles_latency_log[i] = 0
 					else
 						print("packet null")
 					end
 				elseif e[1] == "timer" and e[2] == timer then
 					print("timer triggered")
+
 					MineNetUI.statusBarSetter(
 						colors.red,
 						MineNetUI.statusBars[i].X,
 						MineNetUI.statusBars[i].Y,
 						MineNetUI.statusBars[i].width
 					)
+					turtles_latency_log[i] = turtles_latency_log[i] + 1
+          print("QUOTA:" .. tostring(turtle_latency_quote) .."/".. tostring(turtles_latency_log[i]))
+          --if turtles_latency_log[i] >= turtle_latency_quote then
+            --  boot_toggle = true
 
+          --end
 					gotResponse = true
 				else
 					print("all failed")
